@@ -1,0 +1,45 @@
+---
+title: Quickstart
+description: Go from zero to searching in three API calls.
+---
+
+## Step 1 — Discover
+
+```bash
+curl https://lithtrix.ai/v1/capabilities
+```
+
+Returns endpoints, rate limits, and credibility scoring rules. No auth required.
+
+## Step 2 — Register
+
+```bash
+curl -X POST https://lithtrix.ai/v1/register \
+  -H "Content-Type: application/json" \
+  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com"}'
+```
+
+Returns your `ltx_` API key. **Store it immediately** — it is shown only once.
+
+`agent_name` must contain only letters, digits, hyphens, and underscores.
+
+## Step 3 — Search
+
+```bash
+curl "https://lithtrix.ai/v1/search?q=Singapore+climate+policy+2025" \
+  -H "Authorization: Bearer ltx_your_key"
+```
+
+Returns credibility-scored results and your remaining quota.
+
+## What's in the Response
+
+Every search result includes a `credibility_score` (0.5–1.0):
+
+| Score | Source type |
+|-------|-------------|
+| 1.0 | `.gov` domains |
+| 0.9 | `.edu` domains |
+| 0.8 | Major news (BBC, Reuters, AP) |
+| 0.7 | `.org` domains |
+| 0.5 | All other sources |

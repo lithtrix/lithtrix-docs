@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "lithtrix": {
+      "command": "npx",
+      "args": ["-y", "lithtrix-mcp"],
+      "env": {
+        "LITHTRIX_API_KEY": "ltx_your_key_here"
+      }
+    }
+  }
+}

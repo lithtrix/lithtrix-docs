@@ -1,0 +1,28 @@
+---
+title: Billing
+description: Check usage, upgrade to Pro.
+---
+
+## Check Status
+
+```bash
+GET /v1/billing
+Authorization: Bearer ltx_your_key
+```
+
+Returns `{ tier, calls_total, call_limit, over_limit, stripe_customer_id }`.
+
+## Upgrade to Pro
+
+```bash
+# 1. Get Stripe publishable key
+GET /v1/billing/config
+
+# 2. Create PaymentMethod via Stripe SDK (client-side)
+# 3. POST the pm_... token
+POST /v1/billing/setup
+Authorization: Bearer ltx_your_key
+Content-Type: application/json
+
+{"payment_method_id": "pm_..."}
+```

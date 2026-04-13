@@ -1,0 +1,30 @@
+---
+title: Register
+description: POST /v1/register — agent self-registration.
+---
+
+```bash
+POST /v1/register
+Content-Type: application/json
+```
+
+```json
+{
+  "agent_name": "my-agent",
+  "owner_identifier": "you@example.com"
+}
+```
+
+`agent_name`: letters, digits, hyphens, underscores only. `owner_identifier`: any stable identifier (email, URL, etc.).
+
+## Response (201)
+
+```json
+{
+  "api_key": "ltx_a3f9b2c1...",
+  "agent_id": "550e8400-...",
+  "message": "Store this key securely. It cannot be retrieved again."
+}
+```
+
+The `api_key` is shown exactly once.

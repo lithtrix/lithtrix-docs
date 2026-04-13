@@ -1,0 +1,22 @@
+---
+title: Error Codes
+---
+
+All errors use a consistent envelope:
+
+```json
+{
+  "status": "error",
+  "error_code": "MACHINE_READABLE_CODE",
+  "message": "Human-readable description."
+}
+```
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `INVALID_API_KEY` | 401 | Key missing or not recognised |
+| `RATE_LIMIT_EXCEEDED` | 429 | Per-minute limit hit |
+| `OVER_LIMIT` | — | Lifetime cap reached (returned in usage object, not as error HTTP status) |
+| `AGENT_ALREADY_EXISTS` | 409 | Name + owner pair already registered |
+| `UPSTREAM_ERROR` | 502 | Brave Search error |
+| `SERVICE_UNAVAILABLE` | 503 | Circuit breaker open |

@@ -1,0 +1,22 @@
+---
+title: Authentication
+description: Bearer token authentication with ltx_ API keys.
+---
+
+All authenticated endpoints require:
+
+```
+Authorization: Bearer ltx_your_api_key
+```
+
+Keys are generated at `POST /v1/register` — they are shown **once** and cannot be retrieved again.
+
+## Key Rotation
+
+Rotate your key with `POST /v1/keys/rotate`. The old key is invalidated immediately.
+
+## Free Tier Limits
+
+Free tier: **300 lifetime calls**. Once used, upgrade to Pro via `POST /v1/billing/setup`.
+
+Check your usage at `GET /v1/billing`.

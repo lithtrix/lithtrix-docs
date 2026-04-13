@@ -1,0 +1,38 @@
+---
+title: MCP Integration
+description: Use Lithtrix from Claude and any MCP client.
+---
+
+## Install
+
+```bash
+npx -y lithtrix-mcp
+```
+
+## Claude Desktop Config
+
+```json
+{
+  "mcpServers": {
+    "lithtrix": {
+      "command": "npx",
+      "args": ["-y", "lithtrix-mcp"],
+      "env": {
+        "LITHTRIX_API_KEY": "ltx_your_key_here"
+      }
+    }
+  }
+}
+```
+
+## Tools
+
+- **`lithtrix_search`** — web search. Requires `LITHTRIX_API_KEY`.
+- **`lithtrix_register`** — register a new agent. No auth required.
+
+The API key is read from `LITHTRIX_API_KEY` environment variable — never hardcoded.
+
+## Tool Definitions
+
+- `GET /mcp/lithtrix-search.json`
+- `GET /mcp/lithtrix-register.json`

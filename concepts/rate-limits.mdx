@@ -1,0 +1,10 @@
+---
+title: Rate Limits
+---
+
+| Tier | Per-minute limit | Lifetime cap |
+|------|-----------------|--------------|
+| Free | 60 requests/min | 300 calls |
+| Pro | 600 requests/min | Unlimited |
+
+When rate limited, the API returns HTTP 429 with a `Retry-After` header.

@@ -1,0 +1,43 @@
+---
+title: Search
+description: GET /v1/search — web search with credibility scoring.
+---
+
+```bash
+GET /v1/search?q={query}&num_results={n}
+Authorization: Bearer ltx_your_key
+```
+
+## Parameters
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `q` | string | Yes | Search query (1–500 chars) |
+| `num_results` | integer | No | Results to return (1–20, default 10) |
+
+## Response
+
+```json
+{
+  "status": "success",
+  "query": "Singapore climate policy",
+  "results": [
+    {
+      "title": "Singapore Green Plan 2030",
+      "url": "https://www.greenplan.gov.sg",
+      "snippet": "...",
+      "source": "www.greenplan.gov.sg",
+      "credibility_score": 1.0,
+      "published_date": null
+    }
+  ],
+  "usage": {
+    "calls_total": 42,
+    "calls_remaining": 258,
+    "over_limit": false,
+    "upgrade_url": "/v1/billing/setup"
+  },
+  "cached": false,
+  "response_time_ms": 312
+}
+```

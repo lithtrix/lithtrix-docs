@@ -1,0 +1,43 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Lithtrix",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#6366f1",
+    "light": "#818cf8",
+    "dark": "#4f46e5"
+  },
+  "topbarLinks": [
+    { "name": "API Status", "url": "https://lithtrix.ai/health" }
+  ],
+  "topbarCtaButton": {
+    "name": "Get API Key",
+    "url": "https://lithtrix.ai/v1/guide"
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "quickstart", "authentication"]
+    },
+    {
+      "group": "API Reference",
+      "pages": ["api-reference/search", "api-reference/register", "api-reference/billing", "api-reference/usage"]
+    },
+    {
+      "group": "Concepts",
+      "pages": ["concepts/rate-limits", "concepts/errors", "concepts/credibility-scoring"]
+    },
+    {
+      "group": "Integrations",
+      "pages": ["integrations/mcp"]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/lithtrixhq",
+    "github": "https://github.com/lithtrix/lithtrix-docs"
+  }
+}
