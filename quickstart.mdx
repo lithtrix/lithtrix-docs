@@ -19,6 +19,8 @@ curl -X POST https://lithtrix.ai/v1/register \
   -d '{"agent_name":"my-agent","owner_identifier":"you@example.com"}'
 ```
 
+Optional: add `"referral_agent":"<referrer-uuid>"` to credit another agent — use the UUID they see as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) (free tier: +100 lifetime web-discovery calls per qualifying referral for the referrer).
+
 Returns your `ltx_` API key. **Store it immediately** — it is shown only once.
 
 `agent_name` must contain only letters, digits, hyphens, and underscores.

@@ -1,0 +1,99 @@
+---
+title: Memory
+description: Per-agent JSON memory — PUT/GET/DELETE, list, stats, and context reload.
+---
+
+All routes require `Authorization: Bearer ltx_your_key` (same key as search). Each agent only sees its own keys; storage is namespaced by agent id server-side.
+
+## Endpoints
+
+```bash
+PUT    /v1/memory/{key}
+GET    /v1/memory/{key}
+DELETE /v1/memory/{key}
+GET    /v1/memory
+GET    /v1/memory/stats
+GET    /v1/memory/context
+GET    /v1/memory/search
+```
+
+## Store or update (PUT)
+
+```bash
+PUT /v1/memory/session-state
+Authorization: Bearer ltx_your_key
+Content-Type: application/json
+```
+
+```json
+{
+  "value": { "theme": "dark", "locale": "en-SG" },
+  "ttl": 86400,
+  "importance": "normal",
+  "source": "onboarding",
+  "confidence": 1.0
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `value` | JSON | Yes | Any JSON-serializable value (max **512 KB** UTF-8 per key after serialization) |
+| `ttl` | integer | No | Positive seconds until expiry, when supported by storage |
+| `importance` | string | No | One of `critical`, `high`, `normal`, `low` (default `normal`) |
+| `source` | string | No | Provenance label (max 255 chars), e.g. tool or workflow name |
+| `confidence` | number | No | `0.0`–`1.0` (default `1.0`) — agent-supplied certainty for downstream ranking |
+
+## Key rules
+
+- Path segment `{key}`: **1–128** characters, charset `[a-zA-Z0-9-_.:]`
+- Invalid charset or length returns **422** with `MEMORY_KEY_INVALID`. Do not embed raw `/` in the segment (use `.` or `:` for namespaces). A URL-encoded slash in one segment may match no route and return **404** before key validation.
+- **Reserved:** `GET /v1/memory/context` is a fixed route for context reload. A memory key literally named `context` cannot be read with `GET /v1/memory/context` as “get by key” — that path always runs the context handler. Use `GET /v1/memory` (list) or `GET /v1/memory/search` if you need to locate such a key after storing it.
+
+## List keys (GET /v1/memory)
+
+Query parameters: `page` (default 1), `per_page` (1–100, default 50), optional `prefix`, optional `importance`.
+
+Returns **metadata only** (key, sizes, timestamps, provenance fields) — not full values.
+
+## Stats (GET /v1/memory/stats)
+
+Read-only: monthly memory ops, storage bytes, tier limits, and `over_limit`.
+
+## Context reload (GET /v1/memory/context)
+
+Query: `limit` (1–50, default 10), optional `importance` floor (`critical` \| `high` \| `normal` \| `low`).
+
+Returns top entries ranked by **importance** then **recency** — useful after a cold start. This is **not** semantic/vector search.
+
+## Semantic search (GET /v1/memory/search)
+
+Query (authenticated):
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `q` | string | Yes | Natural-language query (1–500 chars); embedded server-side |
+| `limit` | integer | No | 1–20, default **5** |
+| `importance` | string | No | Same floor as context: `critical` \| `high` \| `normal` \| `low` |
+| `threshold` | number | No | Minimum similarity 0–1, default **0.7** |
+
+Returns ranked hits with `similarity` (0–1), full `value`, and provenance fields. Requires **OpenAI** (embeddings) and **Upstash Vector** on the host; otherwise the API responds with **503** and `MEMORY_SEARCH_UNAVAILABLE`. Each successful call counts as one **memory operation** toward Free-tier monthly limits. Empty or whitespace `q` yields **422** `MEMORY_QUERY_REQUIRED`.
+
+## Response shape
+
+Successful responses include a `usage` object (memory ops and storage vs tier). Exact fields match the live OpenAPI schema at `/openapi.json`.
+
+## Common errors
+
+| `error_code` | HTTP | Meaning |
+|--------------|------|---------|
+| `MEMORY_KEY_INVALID` | 422 | Key length or charset invalid; bad query `importance` on list/context |
+| `MEMORY_KEY_NOT_FOUND` | 404 | No value for that key for this agent |
+| `MEMORY_VALUE_TOO_LARGE` | 413 | Serialized value exceeds 512 KB |
+| `MEMORY_OPS_LIMIT` | 429 | Free-tier monthly memory op cap (upgrade for unlimited ops) |
+| `MEMORY_STORAGE_LIMIT` | 413 | Tier storage cap would be exceeded (see `/v1/memory/stats`) |
+| `RATE_LIMIT_EXCEEDED` | 429 | Per-minute memory rate limit (see `Retry-After`) |
+| `MEMORY_QUERY_REQUIRED` | 422 | Semantic search: `q` missing or empty |
+| `MEMORY_SEARCH_UNAVAILABLE` | 503 | Semantic search not configured or upstream failure |
+| `INVALID_API_KEY` | 401 | Missing or invalid Bearer token |
+
+For discovery metadata without auth, use [GET /v1/capabilities](https://lithtrix.ai/v1/capabilities) and the [agent guide](https://lithtrix.ai/v1/guide).

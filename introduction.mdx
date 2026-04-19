@@ -13,7 +13,7 @@ Lithtrix provides verified, credibility-scored web search results for AI agents.
 # Discover
 curl https://lithtrix.ai/v1/capabilities
 
-# Register (get your API key)
+# Register (get your API key). Optional: "referral_agent":"<uuid>" = another agent's referral_code from GET /v1/me
 curl -X POST https://lithtrix.ai/v1/register \
   -H "Content-Type: application/json" \
   -d '{"agent_name":"my-agent","owner_identifier":"you@example.com"}'

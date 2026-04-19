@@ -1,0 +1,63 @@
+---
+title: Blobs
+description: Binary upload, download, list, metadata, soft-delete, and signed read URLs.
+---
+
+## Upload
+
+```bash
+PUT /v1/blobs
+Authorization: Bearer ltx_your_key
+Content-Type: application/pdf
+
+<raw bytes>
+```
+
+Multipart (`file` field) or raw body. Returns content-addressed `blob_id` (`b_` + 16 hex). Duplicate bytes → **200** idempotent. Enforces aggregate tier blob storage (**413** `BLOB_STORAGE_LIMIT`).
+
+## Download
+
+```bash
+GET /v1/blobs/{blob_id}
+Authorization: Bearer ltx_your_key
+```
+
+Supports HTTP Range. Wrong agent or soft-deleted → **404** `BLOB_NOT_FOUND`.
+
+## List
+
+```bash
+GET /v1/blobs?page=1&per_page=50
+Authorization: Bearer ltx_your_key
+```
+
+## Metadata
+
+```bash
+GET /v1/blobs/{blob_id}/meta
+Authorization: Bearer ltx_your_key
+```
+
+## Signed read URL
+
+```bash
+GET /v1/blobs/{blob_id}/signed-url?expires_in=3600
+Authorization: Bearer ltx_your_key
+```
+
+## Delete
+
+```bash
+DELETE /v1/blobs/{blob_id}
+Authorization: Bearer ltx_your_key
+```
+
+**204** on success. Aggregate `blob_storage_bytes` refreshes after delete.
+
+## Billing
+
+See [Billing](/api-reference/billing): `blob_storage_bytes` / `blob_storage_limit_bytes` for aggregate object storage (separate from memory embedding bytes).
+
+## MCP
+
+Static tool schemas: `GET https://lithtrix.ai/mcp/lithtrix-blob-upload.json` (and `-download`, `-list`, `-meta`, `-delete`, `-signed-url`).

@@ -1,0 +1,43 @@
+---
+title: Parse
+description: POST /v1/blobs/{blob_id}/parse — extract text/tables (sync or async).
+---
+
+## Sync parse
+
+```bash
+POST /v1/blobs/{blob_id}/parse
+Authorization: Bearer ltx_your_key
+```
+
+Default when blob size is under server `PARSE_SYNC_MAX_BYTES`. Supported types depend on stored `Content-Type` (PDF, DOCX, CSV, XLSX). Counts toward **`parse_ops`** quotas. Per-minute **parse rate limits** by tier (**429** `PARSE_RATE_LIMIT`).
+
+## Async parse
+
+```bash
+POST /v1/blobs/{blob_id}/parse?async=true
+Authorization: Bearer ltx_your_key
+Content-Type: application/json
+
+{"callback_url": "https://…"}
+```
+
+**202** queued when async is enabled and the host has QStash configured. Optional **`callback_url`**: HTTPS with publicly resolvable host (validated server-side). Body optional for sync.
+
+## Poll status
+
+```bash
+GET /v1/blobs/{blob_id}/parse/{parse_id}
+Authorization: Bearer ltx_your_key
+```
+
+Returns status, structured `result` when complete, or error message on failure.
+
+## Errors
+
+Common codes: `PARSE_TOO_LARGE_SYNC`, `PARSE_UNSUPPORTED_TYPE`, `PARSE_QUOTA_EXCEEDED`, `PARSE_RATE_LIMIT`, `PARSE_ASYNC_DISABLED`, `BLOB_NOT_FOUND`.
+
+## MCP
+
+- `GET https://lithtrix.ai/mcp/lithtrix-blob-parse.json`
+- `GET https://lithtrix.ai/mcp/lithtrix-blob-parse-status.json`

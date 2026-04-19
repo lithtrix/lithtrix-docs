@@ -25,11 +25,25 @@
     },
     {
       "group": "API Reference",
-      "pages": ["api-reference/search", "api-reference/register", "api-reference/billing", "api-reference/usage"]
+      "pages": [
+        "api-reference/search",
+        "api-reference/memory",
+        "api-reference/register",
+        "api-reference/billing",
+        "api-reference/usage",
+        "api-reference/blobs",
+        "api-reference/parse",
+        "api-reference/blob-search"
+      ]
     },
     {
       "group": "Concepts",
-      "pages": ["concepts/rate-limits", "concepts/errors", "concepts/credibility-scoring"]
+      "pages": [
+        "concepts/rate-limits",
+        "concepts/errors",
+        "concepts/credibility-scoring",
+        "concepts/document-processing"
+      ]
     },
     {
       "group": "Integrations",

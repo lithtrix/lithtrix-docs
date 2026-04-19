@@ -1,0 +1,21 @@
+---
+title: Blob search
+description: GET /v1/blobs/search — semantic search over parsed document chunks.
+---
+
+```bash
+GET /v1/blobs/search?q={query}&limit=5&threshold=0.7
+Authorization: Bearer ltx_your_key
+```
+
+## Metering (D7)
+
+Counts as **one search call** in the **same pool** as [`GET /v1/search`](/api-reference/search): `usage_logs` records `endpoint=/v1/blobs/search`. **`usage`** in the response matches the web-search shape (`calls_total`, `calls_remaining`, `over_limit`, …). **429** `SEARCH_CALLS_LIMIT` is returned **before** embedding when over quota (saves vector work).
+
+## Requirements
+
+Requires **Upstash Vector** (blob namespace) and **OpenAI** (or configured) embeddings on the API host. If unset, **503** `BLOB_SEARCH_UNAVAILABLE`.
+
+## MCP
+
+`GET https://lithtrix.ai/mcp/lithtrix-blob-search.json` — tool **`lithtrix_blob_search`**.

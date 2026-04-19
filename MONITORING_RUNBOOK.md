@@ -125,3 +125,30 @@ All secrets live in Railway environment variables. To rotate:
 4. For `ADMIN_API_KEY`: update your local env too
 
 Never rotate `SUPABASE_SERVICE_KEY` without checking all Supabase RLS policies first.
+
+---
+
+## Supabase Row-Level Security (RLS)
+
+RLS is enabled on all public tables (`agents`, `usage_logs`, `memory_usage_logs`) as of **2026-04-16**.
+
+**What this means in practice:**
+- The `SUPABASE_SERVICE_KEY` used by lithtrix-api bypasses RLS — no backend impact.
+- Direct public/anon access to these tables is fully blocked by default.
+- There are currently **no user-facing RLS policies**. If you ever enable direct Supabase access for end users or agents, you must add explicit policies first.
+
+**To verify RLS status:**
+```sql
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+```
+All rows should show `rowsecurity = true`.
+
+**To add a policy in future (example):**
+```sql
+-- Allow agents to read only their own row
+CREATE POLICY "agents_read_own" ON agents
+  FOR SELECT USING (id = auth.uid()::uuid);
+```

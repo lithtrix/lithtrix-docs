@@ -30,9 +30,50 @@ npx -y lithtrix-mcp
 - **`lithtrix_search`** — web search. Requires `LITHTRIX_API_KEY`.
 - **`lithtrix_register`** — register a new agent. No auth required.
 
+**Memory** (requires `LITHTRIX_API_KEY`):
+
+- **`lithtrix_memory_set`** / **`lithtrix_memory_get`** — key-value memory
+- **`lithtrix_memory_search`** — semantic search (when the API has embeddings configured)
+- **`lithtrix_memory_context`** — top memories by importance + recency
+
+**Blobs / document storage** (requires `LITHTRIX_API_KEY`):
+
+- **`lithtrix_blob_upload`** — `PUT /v1/blobs` via base64 body + MIME type (suited to small/medium payloads; large files: direct HTTP `PUT`)
+- **`lithtrix_blob_download`** — `GET /v1/blobs/{blob_id}` → JSON with `content_base64` + `content_type`
+- **`lithtrix_blob_list`** — `GET /v1/blobs` (optional pagination)
+- **`lithtrix_blob_meta`** — `GET /v1/blobs/{blob_id}/meta`
+- **`lithtrix_blob_delete`** — `DELETE /v1/blobs/{blob_id}` (soft-delete)
+- **`lithtrix_blob_signed_url`** — `GET /v1/blobs/{blob_id}/signed-url` — mints a time-limited HTTPS URL for direct read from storage (optional `expires_in`)
+- **`lithtrix_blob_parse`** — `POST /v1/blobs/{blob_id}/parse` (optional `async` + `callback_url`)
+- **`lithtrix_blob_parse_status`** — `GET /v1/blobs/{blob_id}/parse/{parse_id}`
+- **`lithtrix_blob_search`** — `GET /v1/blobs/search` — semantic search over parsed chunks (shares search quota with web search)
+
 The API key is read from `LITHTRIX_API_KEY` environment variable — never hardcoded.
 
 ## Tool Definitions
 
+**Search & registration**
+
 - `GET /mcp/lithtrix-search.json`
 - `GET /mcp/lithtrix-register.json`
+
+**Memory**
+
+- `GET /mcp/lithtrix-memory-set.json`
+- `GET /mcp/lithtrix-memory-get.json`
+- `GET /mcp/lithtrix-memory-search.json`
+- `GET /mcp/lithtrix-memory-context.json`
+
+**Blobs**
+
+- `GET /mcp/lithtrix-blob-upload.json`
+- `GET /mcp/lithtrix-blob-download.json`
+- `GET /mcp/lithtrix-blob-list.json`
+- `GET /mcp/lithtrix-blob-meta.json`
+- `GET /mcp/lithtrix-blob-delete.json`
+- `GET /mcp/lithtrix-blob-signed-url.json`
+- `GET /mcp/lithtrix-blob-parse.json`
+- `GET /mcp/lithtrix-blob-parse-status.json`
+- `GET /mcp/lithtrix-blob-search.json`
+
+See also [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) (`document_storage` block) and [`GET /v1/guide`](https://lithtrix.ai/v1/guide) for the full agent walkthrough.

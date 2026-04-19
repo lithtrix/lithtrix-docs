@@ -1,28 +1,77 @@
 ---
 title: Billing
-description: Check usage, upgrade to Pro.
+description: Usage status, Stripe config, and paid tiers (Starter / Pro).
 ---
 
-## Check Status
+## Check status
 
 ```bash
 GET /v1/billing
 Authorization: Bearer ltx_your_key
 ```
 
-Returns `{ tier, calls_total, call_limit, over_limit, stripe_customer_id }`.
+Returns a snapshot of the authenticated agent:
 
-## Upgrade to Pro
+| Field | Meaning |
+|-------|---------|
+| `tier` | `free`, `starter`, or `pro` |
+| `calls_total` | Free: **lifetime** web-discovery calls. Starter/Pro: **this UTC month** |
+| `call_limit` | Free: `300` (lifetime). Starter: `1500` / month. Pro: `5000` / month |
+| `over_limit` | `true` if search, combined memory, blob aggregate, or parse quota is at cap |
+| `stripe_customer_id` | Stripe `cus_...` if subscribed |
+| `memory_ops_this_month` | Memory operations logged this UTC month |
+| `memory_ops_limit` | Free: `1000`. Starter: `5000`. Pro: `null` (unlimited) |
+| `memory_storage_bytes` | KV JSON storage only (bytes) |
+| `blob_embed_storage_bytes` | Bytes used by parsed document chunk embeddings |
+| `combined_memory_storage_bytes` | `memory_storage_bytes + blob_embed_storage_bytes` (display) |
+| `memory_storage_limit_bytes` | Tier cap; **`over_limit`** uses **combined** vs this cap |
+| `search_calls_this_month` | Web-discovery rows in `usage_logs` this UTC month |
+| `search_calls_limit` | Monthly search cap for Starter/Pro; `null` on Free (use `call_limit`) |
+| `search_calls_remaining` | Remaining monthly searches (paid only); `null` on Free |
+| `search_overage_rate_per_call` | Informational: Starter `0.015`, Pro `0.012`; `null` on Free |
+| `blob_storage_bytes` / `blob_storage_limit_bytes` | Aggregate raw blob bytes vs tier cap |
+| `parse_ops_this_month` / `parse_ops_lifetime` | Parse usage (free tier uses lifetime cap) |
+| `parse_ops_limit` | Tier cap for successful parses |
+
+## Public config (no auth)
 
 ```bash
-# 1. Get Stripe publishable key
 GET /v1/billing/config
+```
 
-# 2. Create PaymentMethod via Stripe SDK (client-side)
-# 3. POST the pm_... token
+Returns:
+
+- `stripe_publishable_key` — for Stripe.js / PaymentMethod creation
+- `stripe_starter_price_id` — recurring Starter price (`price_...`)
+- `stripe_pro_price_id` — recurring Pro price (`price_...`)
+
+Empty price ids mean that tier is not configured on the server yet.
+
+## Subscribe (Starter or Pro)
+
+```bash
 POST /v1/billing/setup
 Authorization: Bearer ltx_your_key
 Content-Type: application/json
 
-{"payment_method_id": "pm_..."}
+{
+  "payment_method_id": "pm_...",
+  "tier": "starter"
+}
 ```
+
+- `tier`: `"starter"` or `"pro"`. Omitted defaults to **`"pro"`** for backward compatibility.
+- Server attaches the PaymentMethod, creates a Stripe **Subscription** for the matching price id, and sets `agents.tier`.
+- If the required price id env var is missing, responds **400** `BILLING_PRICE_NOT_CONFIGURED`.
+
+## Webhook
+
+`POST /v1/billing/webhook` — Stripe-signed events (MVP logging). Configure `STRIPE_WEBHOOK_SECRET` on the host.
+
+## Environment (ops)
+
+- `STRIPE_STARTER_PRICE_ID` — Starter recurring price
+- `STRIPE_PRO_PRICE_ID` — Pro recurring price  
+- Plus existing `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+
+See also [GET /v1/capabilities](https://lithtrix.ai/v1/capabilities) for `billing_tiers` and rate-limit copy.

@@ -11,11 +11,14 @@ Content-Type: application/json
 ```json
 {
   "agent_name": "my-agent",
-  "owner_identifier": "you@example.com"
+  "owner_identifier": "you@example.com",
+  "referral_agent": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
 `agent_name`: letters, digits, hyphens, underscores only. `owner_identifier`: any stable identifier (email, URL, etc.).
+
+**`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. On the **free** tier, each qualifying referral (another agent registers with your UUID) increases the referrer's **lifetime** web-discovery cap by **+100** (base default 300; see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities)). Starter and Pro tiers do not receive this bonus.
 
 ## Response (201)
 

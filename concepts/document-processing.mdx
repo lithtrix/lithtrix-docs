@@ -1,0 +1,21 @@
+---
+title: Document processing
+description: When to parse blobs, sync vs async, and semantic search over chunks.
+---
+
+## Flow
+
+1. **Upload** a file with [`PUT /v1/blobs`](/api-reference/blobs) — same `blob_id` for all follow-on APIs.
+2. **Parse** with [`POST /v1/blobs/{blob_id}/parse`](/api-reference/parse) — sync for small payloads; **`?async=true`** for larger blobs or when you want QStash + optional **HTTPS callback**.
+3. **Poll** [`GET /v1/blobs/{blob_id}/parse/{parse_id}`](/api-reference/parse) until `complete` or `failed`.
+4. **Search** semantically with [`GET /v1/blobs/search`](/api-reference/blob-search) — natural-language query over embedded chunks.
+
+## Quotas
+
+- **parse_ops** — free-tier lifetime cap; starter/pro monthly caps (see `GET /v1/billing` and `GET /v1/capabilities`).
+- **Parse rate limits** — per-minute caps by tier (5 / 30 / 60 free / starter / pro).
+- **Search** — blob search shares **web discovery** + blob search quota (same counters as `GET /v1/search`).
+
+## Storage (billing)
+
+KV memory (`memory_storage_bytes`) and blob chunk embeddings (`blob_embed_storage_bytes`) are reported separately; **`combined_memory_storage_bytes`** vs cap drives memory **`over_limit`** on [`GET /v1/billing`](/api-reference/billing).
