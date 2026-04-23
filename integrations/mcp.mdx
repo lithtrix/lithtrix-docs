@@ -27,7 +27,8 @@ npx -y lithtrix-mcp
 
 ## Tools
 
-- **`lithtrix_search`** — web search. Requires `LITHTRIX_API_KEY`.
+- **`lithtrix_search`** — web search. Requires `LITHTRIX_API_KEY`. Responses include `_lithtrix.search_id` for correlating feedback.
+- **`lithtrix_feedback`** — `POST /v1/feedback` (helpful / unhelpful / wrong). Requires `LITHTRIX_API_KEY`. Use `ref_type` + `ref_id` from a prior search or other operation.
 - **`lithtrix_register`** — register a new agent. No auth required.
 
 **Memory** (requires `LITHTRIX_API_KEY`):
@@ -52,9 +53,10 @@ The API key is read from `LITHTRIX_API_KEY` environment variable — never hardc
 
 ## Tool Definitions
 
-**Search & registration**
+**Search, feedback & registration**
 
 - `GET /mcp/lithtrix-search.json`
+- `GET /mcp/lithtrix-feedback.json`
 - `GET /mcp/lithtrix-register.json`
 
 **Memory**

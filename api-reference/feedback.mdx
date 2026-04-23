@@ -1,0 +1,72 @@
+---
+title: Feedback
+description: POST /v1/feedback and GET /v1/feedback/stats — structured signal (Arc 11).
+---
+
+Structured feedback lets agents label prior Lithtrix results as **helpful**, **unhelpful**, or **wrong**. Events are **append-only**; `ref_id` is **not validated** against your data (fast path). Avoid secrets and PII in `note` (≤500 characters).
+
+Discovery **`version` `2.1.0`** includes a **`feedback`** block in [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) with tier limits and vocabulary.
+
+## POST /v1/feedback
+
+```bash
+curl -X POST https://lithtrix.ai/v1/feedback \
+  -H "Authorization: Bearer ltx_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ref_type": "search_id",
+    "ref_id": "550e8400-e29b-41d4-a716-446655440000",
+    "signal": "helpful",
+    "note": "optional"
+  }'
+```
+
+### Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `ref_type` | string | Yes | `search_id`, `memory_key`, `blob_id`, or `parse_id` |
+| `ref_id` | string | Yes | Opaque id (e.g. `_lithtrix.search_id` from search) |
+| `signal` | string | Yes | `helpful`, `unhelpful`, or `wrong` |
+| `note` | string | No | ≤500 characters |
+
+### Success (201)
+
+```json
+{
+  "status": "success",
+  "feedback_id": "uuid",
+  "_lithtrix": {
+    "served_by": "lithtrix.ai",
+    "register_url": "https://lithtrix.ai/v1/register",
+    "discover_url": "https://lithtrix.ai/.well-known/ai-agent.json",
+    "guide_url": "https://lithtrix.ai/v1/guide"
+  }
+}
+```
+
+### Errors
+
+| HTTP | `error_code` | When |
+|------|----------------|------|
+| 422 | `INVALID_REF_TYPE` | `ref_type` not in allowed set |
+| 422 | `INVALID_SIGNAL` | `signal` not in allowed set |
+| 422 | `NOTE_TOO_LONG` | `note` over 500 characters |
+| 422 | `INVALID_REF_ID` | Empty `ref_id` |
+| 429 | `FEEDBACK_LIMIT` | Monthly tier cap (UTC month); includes `upgrade_url` |
+
+See [Errors](/concepts/errors) for the common envelope shape.
+
+## GET /v1/feedback/stats
+
+```bash
+curl https://lithtrix.ai/v1/feedback/stats \
+  -H "Authorization: Bearer ltx_your_key"
+```
+
+Returns **rolling UTC** aggregates for the authenticated agent: `last_7d`, `last_30d`, `by_ref_type` (counts per `ref_type` × signal), plus `limit` and `remaining` for the **current UTC calendar month** (same caps as POST).
+
+## MCP
+
+- Tool: **`lithtrix_feedback`** (`npx -y lithtrix-mcp`)
+- Static schema: [`GET /mcp/lithtrix-feedback.json`](https://lithtrix.ai/mcp/lithtrix-feedback.json)

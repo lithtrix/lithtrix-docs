@@ -52,7 +52,9 @@ DELETE /v1/blobs/{blob_id}
 Authorization: Bearer ltx_your_key
 ```
 
-**204** on success. Aggregate `blob_storage_bytes` refreshes after delete.
+**204** when the request is valid: soft-deletes an active blob, or is an idempotent no-op if the blob is already gone for this agent (including never existed or another agent’s object — same **204** so existence is not leaked). Malformed `blob_id` (not `b_` + 16 hex) → **404** `BLOB_NOT_FOUND`.
+
+When a row actually transitions to soft-deleted, aggregate `blob_storage_bytes` refreshes. Storage objects are removed later by reconciliation after a configurable grace period.
 
 ## Billing
 

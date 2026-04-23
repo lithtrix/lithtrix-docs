@@ -27,6 +27,7 @@
       "group": "API Reference",
       "pages": [
         "api-reference/search",
+        "api-reference/feedback",
         "api-reference/memory",
         "api-reference/register",
         "api-reference/billing",

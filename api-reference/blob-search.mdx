@@ -19,3 +19,7 @@ Requires **Upstash Vector** (blob namespace) and **OpenAI** (or configured) embe
 ## MCP
 
 `GET https://lithtrix.ai/mcp/lithtrix-blob-search.json` — tool **`lithtrix_blob_search`**.
+
+## Response shape
+
+Successful JSON includes **`provider_used`: `"vector"`** (semantic / embedding index only — this route does not call Brave or Tavily).

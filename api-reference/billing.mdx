@@ -15,8 +15,8 @@ Returns a snapshot of the authenticated agent:
 | Field | Meaning |
 |-------|---------|
 | `tier` | `free`, `starter`, or `pro` |
-| `calls_total` | Free: **lifetime** web-discovery calls. Starter/Pro: **this UTC month** |
-| `call_limit` | Free: `300` (lifetime). Starter: `1500` / month. Pro: `5000` / month |
+| `calls_total` | Free: **lifetime** web-discovery + blob-search calls (shared pool). Starter/Pro: **this UTC month** |
+| `call_limit` | Free: **effective lifetime** cap (base `300` + referral bonus per product rules — same as `GET /v1/search` usage). Starter/Pro: monthly search cap |
 | `over_limit` | `true` if search, combined memory, blob aggregate, or parse quota is at cap |
 | `stripe_customer_id` | Stripe `cus_...` if subscribed |
 | `memory_ops_this_month` | Memory operations logged this UTC month |
@@ -25,9 +25,9 @@ Returns a snapshot of the authenticated agent:
 | `blob_embed_storage_bytes` | Bytes used by parsed document chunk embeddings |
 | `combined_memory_storage_bytes` | `memory_storage_bytes + blob_embed_storage_bytes` (display) |
 | `memory_storage_limit_bytes` | Tier cap; **`over_limit`** uses **combined** vs this cap |
-| `search_calls_this_month` | Web-discovery rows in `usage_logs` this UTC month |
-| `search_calls_limit` | Monthly search cap for Starter/Pro; `null` on Free (use `call_limit`) |
-| `search_calls_remaining` | Remaining monthly searches (paid only); `null` on Free |
+| `search_calls_this_month` | Web-discovery rows in `usage_logs` this UTC month (informational on Free) |
+| `search_calls_limit` | Starter/Pro: monthly search cap. **Free:** same as effective lifetime cap (`call_limit`) |
+| `search_calls_remaining` | Starter/Pro: remaining monthly searches. **Free:** `max(0, effective_lifetime_cap - calls_total)` |
 | `search_overage_rate_per_call` | Informational: Starter `0.015`, Pro `0.012`; `null` on Free |
 | `blob_storage_bytes` / `blob_storage_limit_bytes` | Aggregate raw blob bytes vs tier cap |
 | `parse_ops_this_month` / `parse_ops_lifetime` | Parse usage (free tier uses lifetime cap) |

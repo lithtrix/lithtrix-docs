@@ -15,12 +15,19 @@ Authorization: Bearer ltx_your_key
 | `q` | string | Yes | Search query (1–500 chars) |
 | `num_results` | integer | No | Results to return (1–20, default 10) |
 
+## Providers and `provider_used`
+
+The API tries **Brave** first. If Brave fails and the host has **`SEARCH_FALLBACK_ENABLED=true`** and a **`TAVILY_API_KEY`**, the server may answer from **Tavily** once. There is **no** query parameter to pick a provider.
+
+Successful responses include **`provider_used`**: **`"brave"`** or **`"tavily"`**. Brave responses may be **cached** in Redis (same query + `num_results`); Tavily responses are **not** cached in iteration 46, so repeat queries after a fallback miss still hit the providers.
+
 ## Response
 
 ```json
 {
   "status": "success",
   "query": "Singapore climate policy",
+  "provider_used": "brave",
   "results": [
     {
       "title": "Singapore Green Plan 2030",

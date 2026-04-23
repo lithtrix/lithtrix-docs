@@ -33,9 +33,27 @@ Authorization: Bearer ltx_your_key
 
 Returns status, structured `result` when complete, or error message on failure.
 
+## Callback delivery audit
+
+```bash
+GET /v1/blobs/{blob_id}/parse/{parse_id}/deliveries
+Authorization: Bearer ltx_your_key
+```
+
+Lists persisted HTTP attempts for the async parse callback (newest first): `attempt_number`, `status` (`success` / `failed`), `http_status`, `last_error`, `created_at`. Same **404** / `BLOB_NOT_FOUND` rules as poll when the parse is not yours.
+
+## Replay callback (optional)
+
+```bash
+POST /v1/blobs/{blob_id}/parse/{parse_id}/replay
+Authorization: Bearer ltx_your_key
+```
+
+Re-sends the successful-parse callback (same JSON + HMAC as the worker). Requires parse **complete**, HTTPS `callback_url`, and `result` present. **403** `CALLBACK_REPLAY_DISABLED` when the host has not enabled replay; **422** if preconditions fail; **429** `CALLBACK_REPLAY_RATE_LIMIT` (per-minute cap).
+
 ## Errors
 
-Common codes: `PARSE_TOO_LARGE_SYNC`, `PARSE_UNSUPPORTED_TYPE`, `PARSE_QUOTA_EXCEEDED`, `PARSE_RATE_LIMIT`, `PARSE_ASYNC_DISABLED`, `BLOB_NOT_FOUND`.
+Common codes: `PARSE_TOO_LARGE_SYNC`, `PARSE_UNSUPPORTED_TYPE`, `PARSE_QUOTA_EXCEEDED`, `PARSE_RATE_LIMIT`, `PARSE_ASYNC_DISABLED`, `BLOB_NOT_FOUND`, `CALLBACK_REPLAY_DISABLED`, `CALLBACK_REPLAY_RATE_LIMIT`, `PARSE_NOT_COMPLETE`, `PARSE_CALLBACK_URL_MISSING`, `PARSE_RESULT_MISSING`.
 
 ## MCP
 

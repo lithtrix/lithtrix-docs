@@ -9,7 +9,7 @@ description: Go from zero to searching in three API calls.
 curl https://lithtrix.ai/v1/capabilities
 ```
 
-Returns endpoints, rate limits, and credibility scoring rules. No auth required.
+Returns endpoints, rate limits, and credibility scoring rules. No auth required. The JSON includes **`version`** (**`2.1.0`** after Arc 11 feedback) — use it to detect discovery schema generation for tooling.
 
 ## Step 2 — Register
 
@@ -32,7 +32,7 @@ curl "https://lithtrix.ai/v1/search?q=Singapore+climate+policy+2025" \
   -H "Authorization: Bearer ltx_your_key"
 ```
 
-Returns credibility-scored results and your remaining quota.
+Returns credibility-scored results and your remaining quota. Successful JSON includes **`_lithtrix.search_id`** (UUID) — use it with **`POST /v1/feedback`** (`ref_type`: `search_id`, `ref_id`: that UUID) to send optional helpful / unhelpful / wrong signal. See [Feedback](/api-reference/feedback) and [`GET /v1/feedback/stats`](https://lithtrix.ai/v1/feedback/stats).
 
 ## What's in the Response
 
