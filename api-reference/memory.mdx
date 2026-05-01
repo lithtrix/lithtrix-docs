@@ -57,7 +57,7 @@ Returns **metadata only** (key, sizes, timestamps, provenance fields) — not fu
 
 ## Stats (GET /v1/memory/stats)
 
-Read-only: monthly memory ops, storage bytes, tier limits, and `over_limit`.
+Read-only: memory ops used/remaining, storage bytes, tier label, and `over_limit`.
 
 ## Context reload (GET /v1/memory/context)
 
@@ -76,7 +76,7 @@ Query (authenticated):
 | `importance` | string | No | Same floor as context: `critical` \| `high` \| `normal` \| `low` |
 | `threshold` | number | No | Minimum similarity 0–1, default **0.7** |
 
-Returns ranked hits with `similarity` (0–1), full `value`, and provenance fields. Requires **OpenAI** (embeddings) and **Upstash Vector** on the host; otherwise the API responds with **503** and `MEMORY_SEARCH_UNAVAILABLE`. Each successful call counts as one **memory operation** toward Free-tier monthly limits. Empty or whitespace `q` yields **422** `MEMORY_QUERY_REQUIRED`.
+Returns ranked hits with `similarity` (0–1), full `value`, and provenance fields. Requires **OpenAI** (embeddings) and **Upstash Vector** on the host; otherwise the API responds with **503** and `MEMORY_SEARCH_UNAVAILABLE`. Each successful call counts as one **memory operation** toward your tier limits. Empty or whitespace `q` yields **422** `MEMORY_QUERY_REQUIRED`.
 
 ## Response shape
 
@@ -89,7 +89,7 @@ Successful responses include a `usage` object (memory ops and storage vs tier). 
 | `MEMORY_KEY_INVALID` | 422 | Key length or charset invalid; bad query `importance` on list/context |
 | `MEMORY_KEY_NOT_FOUND` | 404 | No value for that key for this agent |
 | `MEMORY_VALUE_TOO_LARGE` | 413 | Serialized value exceeds 512 KB |
-| `MEMORY_OPS_LIMIT` | 429 | Free-tier monthly memory op cap (upgrade for unlimited ops) |
+| `MEMORY_OPS_LIMIT` | 429 | Monthly memory op cap reached — buy a larger pack for higher limits |
 | `MEMORY_STORAGE_LIMIT` | 413 | Tier storage cap would be exceeded (see `/v1/memory/stats`) |
 | `RATE_LIMIT_EXCEEDED` | 429 | Per-minute memory rate limit (see `Retry-After`) |
 | `MEMORY_QUERY_REQUIRED` | 422 | Semantic search: `q` missing or empty |

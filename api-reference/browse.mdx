@@ -1,0 +1,81 @@
+---
+title: Browse
+description: POST /v1/browse and GET /v1/browse/{browse_id} — server-side public web for agents (Arc 13).
+---
+
+**Pay to be fully autonomous.** Lithtrix Browse is server-side public web access for agents: fetch and extract text from public `http(s)` URLs in **static** mode (plain HTTP GET) or **dynamic** mode (rendered HTML). It complements computer-use / Claude-in-Chrome tools, which assume a human session on a device; Browse runs on Lithtrix without a human present. **Public web only.** **Robots.txt is enforced with no exceptions** — disallowed URLs return `BROWSE_ROBOTS_DISALLOW`. Do not expect cookies, logged-in sessions, forms, PDFs inside pages, screenshots, or arbitrary JavaScript execution.
+
+Discovery includes a **`browser`** block in [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities). Successful JSON includes **`_lithtrix.browse_url`**. **Browse requires a paid pack** (Sprint, Mission, or Deploy) — Spark trial is not eligible.
+
+**Auth:** `Authorization: Bearer ltx_...` (same as other `/v1/` routes except register, capabilities, guide).
+
+## POST /v1/browse
+
+```bash
+curl -X POST https://lithtrix.ai/v1/browse \
+  -H "Authorization: Bearer ltx_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/",
+    "mode": "dynamic"
+  }'
+```
+
+### Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | Public `http` or `https` URL |
+| `mode` | string | No | `static` (default) or `dynamic` |
+
+### Success (200)
+
+Returns `browse_id`, `final_url`, `mode`, `http_status`, `content_type`, `title`, `text`, `response_time_ms`, and `_lithtrix` including **`browse_url`**, **`terms_url`**, **`terms_version`**, and **`usage`** (credits remaining, tier label, browse counts).
+
+```json
+{
+  "status": "success",
+  "browse_id": "uuid",
+  "url": "https://example.com/",
+  "final_url": "https://example.com/",
+  "mode": "dynamic",
+  "http_status": 200,
+  "content_type": "text/html; charset=utf-8",
+  "title": "Example",
+  "text": "…",
+  "response_time_ms": 1200,
+  "_lithtrix": {
+    "served_by": "api.lithtrix.ai",
+    "browse_url": "https://api.lithtrix.ai/v1/browse",
+    "feedback_url": "https://api.lithtrix.ai/v1/feedback",
+    "usage": { "browse_calls_remaining": 4 }
+  }
+}
+```
+
+### Errors
+
+| HTTP | `error_code` | When |
+|------|----------------|------|
+| 422 | `INVALID_URL` | URL missing, invalid scheme, or failed validation |
+| 422 | `BROWSE_URL_BLOCKED` | URL not allowed by policy |
+| 422 | `BROWSE_ROBOTS_DISALLOW` | Robots.txt disallows the URL |
+| 429 | `BROWSE_LIMIT` | Monthly browse quota exceeded for tier |
+| 422 | `BROWSE_MODE_UNSUPPORTED` | Unsupported mode; mode must be static or dynamic |
+| 413 | `BROWSE_RESPONSE_TOO_LARGE` | Response body over limit |
+| 503 | `BROWSE_PROVIDER_UNCONFIGURED` | Dynamic provider not configured |
+| 502 / 504 | `BROWSE_PROVIDER_ERROR` / `BROWSE_PROVIDER_TIMEOUT` | Upstream fetch/render failure |
+| 404 | `BROWSE_NOT_FOUND` | **GET** only — unknown id or not your agent |
+
+**Dynamic mode:** Lithtrix validates the requested URL and robots **before** handing off to the render provider; the provider still operates at a boundary — treat errors as infrastructure, not as a guarantee about third-party content.
+
+## GET /v1/browse/{browse_id}
+
+Retrieve a previously logged browse result for this agent (**no refetch**, no additional usage increment). Returns **404** `BROWSE_NOT_FOUND` if the id is unknown or belongs to another agent.
+
+## MCP
+
+- Tool: **`lithtrix_browse`** (`npx -y lithtrix-mcp@0.7.0+`)
+- Static schema: [`GET /mcp/lithtrix-browse.json`](https://lithtrix.ai/mcp/lithtrix-browse.json)
+
+Use [`POST /v1/feedback`](/api-reference/feedback) with `ref_type`: `browse_id` and `ref_id`: the `browse_id` from a prior browse call for structured signal.

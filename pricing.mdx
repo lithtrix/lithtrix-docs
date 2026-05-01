@@ -1,0 +1,60 @@
+---
+title: Pricing
+description: Spark trial, Sprint / Mission / Deploy credit packs, per-call rates, auto top-up — capabilities 2.5.0.
+---
+
+Lithtrix pricing is **credit-pack based**: **Spark** trial on register, then **Sprint**, **Mission**, and **Deploy** one-off packs via the API. **Metered debits:** **Search $0.005** and **Browse $0.005** per successful call. Pack grants **expire 90 days** after purchase (UTC). See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
+
+## Headline framing
+
+**Spark to start. Sprint, Mission, or Deploy when your agent has work to do.**
+
+Paid packs are a **private workspace** for your agent to **search**, **browse**, and **remember**.
+
+## Spark (trial)
+
+- **$5 in credits** on signup — **no card**
+- **Browse is not included** — **buy Sprint (or Mission / Deploy) to unlock Browse**
+- Rough coverage: on the order of **~1,000 searches** at **$0.005**/search (usage varies with other operations)
+
+## Sprint — $25
+
+- One-off credit pack · **90-day expiry** on granted credits
+- Order-of-magnitude **~5,000 searches** or browse calls at **$0.005**/call
+- **Browse** included once purchased
+
+## Mission — $50
+
+- One-off pack · **90-day expiry**
+- Order-of-magnitude **~10,000** metered calls at **$0.005**/call
+
+## Deploy — $100
+
+- One-off pack · **90-day expiry**
+- Order-of-magnitude **~20,000** metered calls at **$0.005**/call
+
+## Per-call rates
+
+- **Search:** **$0.005** per successful call (trial and packs)
+- **Browse:** **$0.005** per successful call (requires paid pack)
+
+## Auto top-up
+
+**Set a threshold. We refill automatically. Your agent never stops mid-task.**  
+Configure via the billing API with a saved payment method (see **`GET /v1/capabilities`** and agent guide).
+
+## Checkout
+
+Use **`POST /v1/billing/packs/checkout`** with your Bearer token (pack: `sprint` | `mission` | `deploy`). Spark is the trial pool and is **not** sold as a pack.
+
+## Legacy subscriptions
+
+Some older accounts may still show **Starter / Pro** monthly billing in **`GET /v1/billing`** — contact support if you need to migrate.
+
+## Need more?
+
+**Need more? Get in touch.** — [hello@lithtrix.ai](mailto:hello@lithtrix.ai) (custom volume; no public list price)
+
+## Referrals
+
+Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent’s UUID (their **`referral_code`** from **`GET /v1/me`**), that referrer receives **+$0.50** in credits per validated signup (no cap; self-referral excluded).

@@ -5,7 +5,7 @@ description: POST /v1/feedback and GET /v1/feedback/stats — structured signal 
 
 Structured feedback lets agents label prior Lithtrix results as **helpful**, **unhelpful**, or **wrong**. Events are **append-only**; `ref_id` is **not validated** against your data (fast path). Avoid secrets and PII in `note` (≤500 characters).
 
-Discovery **`version` `2.1.0`** includes a **`feedback`** block in [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) with tier limits and vocabulary.
+Discovery **`version` `2.2.0`** includes a **`feedback`** block and **`lithtrix_response_envelope`** (shape of **`_lithtrix`**, including **`browse_url`**) in [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) with tier limits and vocabulary.
 
 ## POST /v1/feedback
 
@@ -25,8 +25,8 @@ curl -X POST https://lithtrix.ai/v1/feedback \
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `ref_type` | string | Yes | `search_id`, `memory_key`, `blob_id`, or `parse_id` |
-| `ref_id` | string | Yes | Opaque id (e.g. `_lithtrix.search_id` from search) |
+| `ref_type` | string | Yes | `search_id`, `memory_key`, `blob_id`, `parse_id`, or `browse_id` |
+| `ref_id` | string | Yes | Opaque id (e.g. `_lithtrix.search_id` from search, or `browse_id` from `POST /v1/browse`) |
 | `signal` | string | Yes | `helpful`, `unhelpful`, or `wrong` |
 | `note` | string | No | ≤500 characters |
 
@@ -37,10 +37,14 @@ curl -X POST https://lithtrix.ai/v1/feedback \
   "status": "success",
   "feedback_id": "uuid",
   "_lithtrix": {
-    "served_by": "lithtrix.ai",
-    "register_url": "https://lithtrix.ai/v1/register",
-    "discover_url": "https://lithtrix.ai/.well-known/ai-agent.json",
-    "guide_url": "https://lithtrix.ai/v1/guide"
+    "served_by": "api.lithtrix.ai",
+    "register_url": "https://api.lithtrix.ai/v1/register",
+    "discover_url": "https://api.lithtrix.ai/.well-known/ai-agent.json",
+    "guide_url": "https://api.lithtrix.ai/v1/guide",
+    "feedback_url": "https://api.lithtrix.ai/v1/feedback",
+    "browse_url": "https://api.lithtrix.ai/v1/browse",
+    "terms_url": "https://lithtrix.ai/terms",
+    "terms_version": "2026-04-25"
   }
 }
 ```

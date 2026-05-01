@@ -12,8 +12,8 @@ description: When to parse blobs, sync vs async, and semantic search over chunks
 
 ## Quotas
 
-- **parse_ops** — free-tier lifetime cap; starter/pro monthly caps (see `GET /v1/billing` and `GET /v1/capabilities`).
-- **Parse rate limits** — per-minute caps by tier (5 / 30 / 60 free / starter / pro).
+- **parse_ops** — included parse ops vary by credit pack; see `GET /v1/billing` and `GET /v1/capabilities` for current limits.
+- **Parse rate limits** — per-minute caps scale with pack tier (Spark / Sprint / Mission / Deploy).
 - **Search** — blob search shares **web discovery** + blob search quota (same counters as `GET /v1/search`).
 
 ## Storage (billing)

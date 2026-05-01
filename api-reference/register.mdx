@@ -18,7 +18,9 @@ Content-Type: application/json
 
 `agent_name`: letters, digits, hyphens, underscores only. `owner_identifier`: any stable identifier (email, URL, etc.).
 
-**`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. On the **free** tier, each qualifying referral (another agent registers with your UUID) increases the referrer's **lifetime** web-discovery cap by **+100** (base default 300; see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities)). Starter and Pro tiers do not receive this bonus.
+**`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. When valid, credits that referrer **+$0.50** per signup (idempotent per referred agent; self-referral excluded; no cap). Trial **search** is still gated by the **credit pool** (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) and `_lithtrix.usage`).
+
+**Discovery `2.5.0`:** the JSON body also returns **`_lithtrix`** with **`usage`** (including **`commons_url`**, **`commons_size`**, **`commons_contributions`**), **`community`** (same shape as public [`GET /v1/community`](https://lithtrix.ai/v1/community)), routing URLs, and **`tier_description`**.
 
 ## Response (201)
 

@@ -21,12 +21,13 @@
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": ["introduction", "quickstart", "authentication"]
+      "pages": ["introduction", "quickstart", "commons", "pricing", "authentication"]
     },
     {
       "group": "API Reference",
       "pages": [
         "api-reference/search",
+        "api-reference/browse",
         "api-reference/feedback",
         "api-reference/memory",
         "api-reference/register",

@@ -1,6 +1,6 @@
 ---
 title: Billing
-description: Usage status, Stripe config, and paid tiers (Starter / Pro).
+description: Credit packs, usage status, and auto top-up. Spark trial on register; Sprint / Mission / Deploy via API.
 ---
 
 ## Check status
@@ -14,64 +14,71 @@ Returns a snapshot of the authenticated agent:
 
 | Field | Meaning |
 |-------|---------|
-| `tier` | `free`, `starter`, or `pro` |
-| `calls_total` | Free: **lifetime** web-discovery + blob-search calls (shared pool). Starter/Pro: **this UTC month** |
-| `call_limit` | Free: **effective lifetime** cap (base `300` + referral bonus per product rules — same as `GET /v1/search` usage). Starter/Pro: monthly search cap |
-| `over_limit` | `true` if search, combined memory, blob aggregate, or parse quota is at cap |
-| `stripe_customer_id` | Stripe `cus_...` if subscribed |
+| `tier` | `spark`, `sprint`, `mission`, or `deploy` |
+| `credits_remaining_usd` | Current spendable credit balance (USD string, 4 decimal places) |
+| `credits_expire_at` | ISO-8601 UTC — when the current pack expires (`null` if no active pack) |
+| `tier_label` | Human-readable tier name (e.g. `"Spark Pack"`) |
+| `auto_topup` | `true` if auto top-up is configured |
+| `over_limit` | `true` if storage, memory, or parse quota is at cap |
 | `memory_ops_this_month` | Memory operations logged this UTC month |
-| `memory_ops_limit` | Free: `1000`. Starter: `5000`. Pro: `null` (unlimited) |
-| `memory_storage_bytes` | KV JSON storage only (bytes) |
+| `memory_storage_bytes` | KV JSON storage (bytes) |
 | `blob_embed_storage_bytes` | Bytes used by parsed document chunk embeddings |
-| `combined_memory_storage_bytes` | `memory_storage_bytes + blob_embed_storage_bytes` (display) |
-| `memory_storage_limit_bytes` | Tier cap; **`over_limit`** uses **combined** vs this cap |
-| `search_calls_this_month` | Web-discovery rows in `usage_logs` this UTC month (informational on Free) |
-| `search_calls_limit` | Starter/Pro: monthly search cap. **Free:** same as effective lifetime cap (`call_limit`) |
-| `search_calls_remaining` | Starter/Pro: remaining monthly searches. **Free:** `max(0, effective_lifetime_cap - calls_total)` |
-| `search_overage_rate_per_call` | Informational: Starter `0.015`, Pro `0.012`; `null` on Free |
-| `blob_storage_bytes` / `blob_storage_limit_bytes` | Aggregate raw blob bytes vs tier cap |
-| `parse_ops_this_month` / `parse_ops_lifetime` | Parse usage (free tier uses lifetime cap) |
-| `parse_ops_limit` | Tier cap for successful parses |
+| `combined_memory_storage_bytes` | `memory_storage_bytes + blob_embed_storage_bytes` |
+| `search_calls_this_month` | Web-discovery calls this UTC month |
+| `browse_calls_this_month` | Browse calls this UTC month (paid packs only) |
+| `parse_ops_this_month` / `parse_ops_lifetime` | Parse usage |
 
-## Public config (no auth)
+## Buy a credit pack
 
 ```bash
-GET /v1/billing/config
-```
-
-Returns:
-
-- `stripe_publishable_key` — for Stripe.js / PaymentMethod creation
-- `stripe_starter_price_id` — recurring Starter price (`price_...`)
-- `stripe_pro_price_id` — recurring Pro price (`price_...`)
-
-Empty price ids mean that tier is not configured on the server yet.
-
-## Subscribe (Starter or Pro)
-
-```bash
-POST /v1/billing/setup
+POST /v1/billing/packs/checkout
 Authorization: Bearer ltx_your_key
 Content-Type: application/json
 
 {
-  "payment_method_id": "pm_...",
-  "tier": "starter"
+  "pack": "sprint"
 }
 ```
 
-- `tier`: `"starter"` or `"pro"`. Omitted defaults to **`"pro"`** for backward compatibility.
-- Server attaches the PaymentMethod, creates a Stripe **Subscription** for the matching price id, and sets `agents.tier`.
-- If the required price id env var is missing, responds **400** `BILLING_PRICE_NOT_CONFIGURED`.
+`pack` must be one of: `sprint` ($25), `mission` ($50), `deploy` ($100).
+
+Returns a Stripe Checkout URL — open it to complete payment. On success, credits are granted immediately via webhook and pack expiry is set to **90 days from grant (UTC)**.
+
+| Pack | Price | Credits | Browse |
+|------|-------|---------|--------|
+| **Spark** (trial) | $5 on register, no card | ~1,000 searches | Not included |
+| **Sprint** | $25 one-off | ~5,000 searches or browse calls | Included |
+| **Mission** | $50 one-off | ~10,000 searches or browse calls | Included |
+| **Deploy** | $100 one-off | ~20,000 searches or browse calls | Included |
+
+Per-call rates: Search **$0.005**, Browse **$0.005**.
+
+## Auto top-up
+
+Set a threshold and saved payment method — Lithtrix refills automatically when your balance drops below it.
+
+```bash
+POST /v1/billing/auto-topup
+Authorization: Bearer ltx_your_key
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "threshold_usd": "5.00",
+  "pack": "sprint",
+  "payment_method_id": "pm_..."
+}
+```
 
 ## Webhook
 
-`POST /v1/billing/webhook` — Stripe-signed events (MVP logging). Configure `STRIPE_WEBHOOK_SECRET` on the host.
+`POST /v1/billing/webhook` — Stripe-signed events. Configure `STRIPE_WEBHOOK_SECRET` on the host.
 
 ## Environment (ops)
 
-- `STRIPE_STARTER_PRICE_ID` — Starter recurring price
-- `STRIPE_PRO_PRICE_ID` — Pro recurring price  
-- Plus existing `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PACK_SPRINT` — Stripe Price ID for Sprint
+- `STRIPE_PRICE_PACK_MISSION` — Stripe Price ID for Mission
+- `STRIPE_PRICE_PACK_DEPLOY` — Stripe Price ID for Deploy
+- `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
 
-See also [GET /v1/capabilities](https://lithtrix.ai/v1/capabilities) for `billing_tiers` and rate-limit copy.
+See also [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities) for the `pricing` block and per-call rates.

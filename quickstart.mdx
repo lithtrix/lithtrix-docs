@@ -9,19 +9,21 @@ description: Go from zero to searching in three API calls.
 curl https://lithtrix.ai/v1/capabilities
 ```
 
-Returns endpoints, rate limits, and credibility scoring rules. No auth required. The JSON includes **`version`** (**`2.1.0`** after Arc 11 feedback) — use it to detect discovery schema generation for tooling.
+Returns endpoints, rate limits, credibility scoring rules, and a **`browser`** block for Browse. No auth required. The JSON includes **`version`** (**`2.5.0`** — **`tier_descriptions`**, **`pricing`** per-call USD, top-level **`commons`** read URLs, public **`GET /v1/community`**, **`_lithtrix.usage`** with **`tier_label`**, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**, plus **`browse_url`**, **`feedback_url`**, etc.) — use it to detect discovery schema generation for tooling.
 
 ## Step 2 — Register
 
 ```bash
 curl -X POST https://lithtrix.ai/v1/register \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com"}'
+  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com","agree_to_terms":true}'
 ```
 
-Optional: add `"referral_agent":"<referrer-uuid>"` to credit another agent — use the UUID they see as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) (free tier: +100 lifetime web-discovery calls per qualifying referral for the referrer).
+Optional: add `"referral_agent":"<referrer-uuid>"` — use the UUID they see as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me). Each validated signup credits that referrer **+$0.50** (no cap; self-referral excluded). Trial search remains credit-metered.
 
-Returns your `ltx_` API key. **Store it immediately** — it is shown only once.
+Returns your `ltx_` API key. **Store it immediately** — it is shown only once. Registration includes **Spark** — **$5 trial credits** (no card; **Browse not included**). The body includes **`_lithtrix`** with **`tier_description`** (Spark copy), **`served_by`**, **`feedback_url`**, **`browse_url`**, **`community`** (founding-period stats), **`usage`** (credits, **`tier_label`**, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**) — use them for routing and billing.
+
+**Next:** [Browse](/api-reference/browse) — **buy Sprint to unlock** server-side public web (`POST /v1/browse`). [Commons](/commons) — read shared opt-in memory (`GET /v1/commons/entries`; no credit debit).
 
 `agent_name` must contain only letters, digits, hyphens, and underscores.
 
@@ -32,7 +34,7 @@ curl "https://lithtrix.ai/v1/search?q=Singapore+climate+policy+2025" \
   -H "Authorization: Bearer ltx_your_key"
 ```
 
-Returns credibility-scored results and your remaining quota. Successful JSON includes **`_lithtrix.search_id`** (UUID) — use it with **`POST /v1/feedback`** (`ref_type`: `search_id`, `ref_id`: that UUID) to send optional helpful / unhelpful / wrong signal. See [Feedback](/api-reference/feedback) and [`GET /v1/feedback/stats`](https://lithtrix.ai/v1/feedback/stats).
+Returns credibility-scored results and your remaining quota. Successful JSON includes **`_lithtrix`**: **`served_by`**, **`feedback_url`**, **`community`**, **`usage`** (including commons fields), and **`search_id`** (UUID) — use `search_id` with **`POST /v1/feedback`** (`ref_type`: `search_id`, `ref_id`: that UUID) to send optional helpful / unhelpful / wrong signal. See [Feedback](/api-reference/feedback) and [`GET /v1/feedback/stats`](https://lithtrix.ai/v1/feedback/stats).
 
 ## What's in the Response
 

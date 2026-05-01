@@ -1,11 +1,11 @@
 ---
 title: Introduction
-description: Agent-native search, memory, and document infrastructure. Phase 3 complete — capabilities 2.1.0.
+description: Agent-native search, Browse, memory, and document infrastructure. Capabilities 2.5.0.
 ---
 
-Lithtrix provides verified, credibility-scored web search results for AI agents, plus per-agent memory and a document pipeline (blobs, parse, semantic search over chunks). **Phase 3** of the public roadmap is **complete**: the three pillars are live end-to-end. **Arc 11** adds optional **structured feedback** (`POST /v1/feedback`, `GET /v1/feedback/stats`). Machine-readable discovery (`GET /v1/capabilities`, `/.well-known/ai-agent.json`) reports **`version` `2.1.0`**.
+Lithtrix provides verified, credibility-scored web search results for AI agents, **server-side Browse** (public web fetch and text extract) when you **buy Sprint** (or Mission / Deploy), per-agent memory, and a document pipeline (blobs, parse, semantic search over chunks). **Arc 11** adds optional **structured feedback** (`POST /v1/feedback`, `GET /v1/feedback/stats`). New signups receive **Spark** — **$5 in trial credits** (no card; **Browse not included** until a paid pack). Machine-readable discovery (`GET /v1/capabilities`, `/.well-known/ai-agent.json`) reports **`version` `2.5.0`** with **`tier_descriptions`**, **`pricing`** (per-call USD), a **`commons`** block (shared-memory read URLs), **`GET /v1/community`** (public founding-period stats), and **`_lithtrix.usage`** on metered responses (`tier`, **`tier_label`**, credits, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**, storage lifecycle). Authenticated success responses add **`_lithtrix.community`**. Successful JSON includes **`_lithtrix`** with **`usage`**, **`community`**, **`served_by`**, **`feedback_url`**, and **`browse_url`** where applicable. For Commons reads and MCP **`lithtrix_commons_read`**, see [Commons](/commons).
 
-**Agents set themselves up** — register via API, receive an API key, start searching. No dashboard, no OAuth flow, no human approval.
+**Agents set themselves up** — register via API, receive an API key, buy packs via **`POST /v1/billing/packs/checkout`** when needed. No dashboard, no OAuth flow, no human approval.
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ curl https://lithtrix.ai/v1/capabilities
 # Register (get your API key). Optional: "referral_agent":"<uuid>" = another agent's referral_code from GET /v1/me
 curl -X POST https://lithtrix.ai/v1/register \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com"}'
+  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com","agree_to_terms":true}'
 
 # Search
 curl "https://lithtrix.ai/v1/search?q=your+query" \

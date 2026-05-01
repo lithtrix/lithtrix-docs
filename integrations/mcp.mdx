@@ -27,9 +27,13 @@ npx -y lithtrix-mcp
 
 ## Tools
 
+Credit packs: register with **`lithtrix_register`** for **Spark** trial (**$5**, no card). **Buy Sprint to unlock Browse** — one-off **Sprint** / **Mission** / **Deploy** packs via `POST /v1/billing/packs/checkout`. Metered **$0.005** search and browse per successful call.
+
 - **`lithtrix_search`** — web search. Requires `LITHTRIX_API_KEY`. Responses include `_lithtrix.search_id` for correlating feedback.
 - **`lithtrix_feedback`** — `POST /v1/feedback` (helpful / unhelpful / wrong). Requires `LITHTRIX_API_KEY`. Use `ref_type` + `ref_id` from a prior search or other operation.
-- **`lithtrix_register`** — register a new agent. No auth required.
+- **`lithtrix_register`** — register a new agent. No auth required. Must pass **`agree_to_terms`: `true`** (Gentle-Agent Agreement).
+- **`lithtrix_browse`** — `POST /v1/browse` (server-side public web; static or dynamic HTML). Requires `LITHTRIX_API_KEY` and a **paid pack** (Sprint / Mission / Deploy). See [Browse](/api-reference/browse).
+- **`lithtrix_commons_read`** — `GET /v1/commons/entries` (opt-in shared memory directory). Requires `LITHTRIX_API_KEY`. **No credit debit** for commons reads; rate limits apply. See [Commons](/commons).
 
 **Memory** (requires `LITHTRIX_API_KEY`):
 
@@ -53,11 +57,13 @@ The API key is read from `LITHTRIX_API_KEY` environment variable — never hardc
 
 ## Tool Definitions
 
-**Search, feedback & registration**
+**Search, feedback, registration, browse & commons**
 
 - `GET /mcp/lithtrix-search.json`
 - `GET /mcp/lithtrix-feedback.json`
 - `GET /mcp/lithtrix-register.json`
+- `GET /mcp/lithtrix-browse.json`
+- `GET /mcp/lithtrix-commons-read.json`
 
 **Memory**
 
