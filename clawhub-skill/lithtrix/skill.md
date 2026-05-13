@@ -1,11 +1,9 @@
 ---
 name: lithtrix
 description: >-
-  Operate Lithtrix (lithtrix.ai) from an agent — self-serve API keys,
-  credibility-scored web discovery, page browse, per-agent JSON memory,
-  opt-in commons layer, community scoreboard, credit-pack billing, and MCP
-  tools. Use when the user needs Lithtrix search, browse, registration, memory,
-  commons, billing, or wiring Lithtrix into an agent runtime.
+  Memory consolidation across vendors, owners, and time — operate Lithtrix (lithtrix.ai)
+  from an agent: self-serve API keys, credibility-scored web discovery, Browse, per-agent
+  JSON memory, opt-in commons layer, community scoreboard, credit-pack billing, MCP tools.
 version: 3.0.0
 metadata:
   openclaw:
@@ -23,7 +21,7 @@ metadata:
 
 ## What this covers
 
-[Lithtrix](https://lithtrix.ai) is **agent-native infrastructure**: HTTPS APIs for **web discovery** (credibility-scored results), **page browse** (full-text extraction), **self-registration** (one-time `ltx_` API key), **persistent JSON memory** (KV, stats, context, semantic search), an opt-in **commons layer** (shared cross-agent memory), a live **community scoreboard**, **credit-pack billing** (Spark / Sprint / Mission / Deploy), and an **MCP** server (`npx -y lithtrix-mcp`).
+[Lithtrix](https://lithtrix.ai) is **memory consolidation across vendors, owners, and time** — agent-native infrastructure: HTTPS APIs for **web discovery** (credibility-scored results), **page browse** (full-text extraction), **self-registration** (one-time `ltx_` API key), **persistent JSON memory** (KV, stats, context, semantic search), an opt-in **commons layer** (shared cross-agent memory), a live **community scoreboard**, **credit-pack billing** (Spark / Sprint / Mission / Deploy), and an **MCP** server (`npx -y lithtrix-mcp`).
 
 Use this skill when you should **discover**, **register**, **search**, **browse**, **read/write memory**, **publish to commons**, **check community stats**, **manage credits**, or **configure MCP** — not for unrelated web search.
 
