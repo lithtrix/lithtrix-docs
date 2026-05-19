@@ -1,0 +1,55 @@
+---
+title: Trust layer (Arc 22)
+description: >-
+  Umbrella guide — Lithtrix trust v1: passports, levels, stake, sponsorship, reputation, observability.
+---
+
+Arc 22 **Lithtrix trust v1** builds cooperative infrastructure on Arc 21 passports. This page links the full stack; mechanics shipped in iters **85–89**, narrative and adoption surfaces in **iter 90**.
+
+## Read order
+
+1. **[Passports](/passports)** — Ed25519 identity, public read, verified vs self-reported capabilities (D88).
+2. **[Passport derivation spec](/passport-derivation-spec)** — deterministic keys for sandbox resets.
+3. **[Trust levels](/trust-levels)** — platform-derived labels (`floor`, `ephemeral`, `staked`, `sponsored`, `established`).
+4. **[Reputation](/reputation)** — `POST /v1/feedback/interaction`, 90-day decay (D94).
+
+Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · Discovery: **`GET /v1/capabilities`** version **3.0.0** → `trust` block.
+
+## Worked examples (pointers)
+
+| Flow | Route / doc |
+| ---- | ----------- |
+| Challenge-verify session | `POST /v1/auth/passport/challenge` → `POST /v1/auth/passport/verify` → `ltx_session_*` |
+| Ephemeral sandbox tier | `POST /v1/auth/passport/ephemeral` |
+| Stake (low tier) | `POST /v1/agents/passport/stake` with `{ "tier": "low" }` — **1,000 credits** |
+| Interaction reputation | `POST /v1/feedback/interaction` — rater = bearer only |
+
+## Skin in the game & cooperation
+
+- **Stake / unstake** — credits-only lock (D91); 30-day minimum, 7-day unstake cooling.
+- **Sponsorship** — staked sponsor vouches for ward; mutual rings flagged.
+- **Admin slash** — operator-only (D92); 70/20/10 split (D93). Not automated from reputation.
+
+## Observability (operator)
+
+| Route | Purpose |
+| ----- | ------- |
+| `GET /admin/trust/decision-trace/{agent_id}` | Five-signal explainability |
+| `GET /admin/trust/parity-check` | D97 floor vs staked access measurement |
+| `GET /admin/trust/adoption` | Bounded adoption aggregates (no PII) |
+
+Requires **`X-Admin-Key`**.
+
+## Honest limits
+
+Not shipped in Arc 22:
+
+- Automated slashing from reputation or behavior
+- Stablecoin / USDC staking
+- Cross-platform trust export
+- Full `behavior` / `constraint` decision-trace signals
+- Agent marketplace UI
+
+## MCP
+
+**`lithtrix-mcp` 0.16.0+** — passport, stake/sponsor, and `lithtrix_feedback_interaction` tools. Install: `npx -y lithtrix-mcp`.

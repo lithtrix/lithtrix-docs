@@ -21,7 +21,7 @@
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": ["introduction", "quickstart", "commons", "pricing", "authentication"]
+      "pages": ["introduction", "quickstart", "commons", "pricing", "authentication", "security", "passports", "passport-migration", "passport-derivation-spec", "trust", "trust-levels", "reputation"]
     },
     {
       "group": "API Reference",
@@ -41,6 +41,7 @@
     {
       "group": "Concepts",
       "pages": [
+        "concepts/memory-consolidation",
         "concepts/rate-limits",
         "concepts/errors",
         "concepts/credibility-scoring",

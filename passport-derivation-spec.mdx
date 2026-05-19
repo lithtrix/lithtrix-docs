@@ -1,0 +1,101 @@
+---
+title: Passport derivation spec
+description: >-
+  Deterministic Ed25519 passport keypairs from an operator master seed and agent UUID — client-side only,
+  MIT reference implementations, threat model for master-seed compromise.
+---
+
+Arc 22 **D96** defines how sandboxed operators regenerate the **same** Lithtrix passport keypair after every environment reset — without Lithtrix ever receiving the master seed or private key.
+
+## Normative algorithm
+
+Given:
+
+- **`master_seed_bytes`** — raw byte string used as the HMAC key (see [Master seed encoding](#master-seed-encoding)).
+- **`agent_id`** — canonical lowercase UUID string (same suffix as `did:lithtrix:{agent_id}`).
+
+Compute:
+
+1. `msg = utf8("lithtrix.passport.v1") || utf8(agent_id)`
+2. `seed_bytes = HMAC-SHA512(key=master_seed_bytes, msg=msg)`
+3. `ed25519_seed = seed_bytes[0:32]` (32-byte Ed25519 seed-from-bytes)
+4. Derive Ed25519 keypair from `ed25519_seed` using standard Ed25519 (`Ed25519PrivateKey.from_private_bytes` in Python; PKCS#8 / SPKI PEM as Arc 21 register format).
+
+**Property:** identical `(master_seed_bytes, agent_id)` always yields identical **public** PEM (and identical private PEM). Different `agent_id` values yield unrelated keypairs even with the same master seed.
+
+### PEM encoding (Arc 21 register format)
+
+| Material | Encoding |
+| -------- | -------- |
+| Private key | PKCS#8 PEM (`-----BEGIN PRIVATE KEY-----`) |
+| Public key | SPKI PEM (`-----BEGIN PUBLIC KEY-----`) |
+
+Use the public PEM as optional **`passport_public_key`** on **`POST /v1/register`**. Lithtrix stores public material only; the 201 response omits `private_key` when operator-derived.
+
+## Master seed encoding
+
+**Normative operator input:** UTF-8 passphrase — `master_seed_bytes = passphrase.encode("utf-8")`.
+
+**Test vectors and CLI verification:** hex-decoded bytes (even length, no spaces) via `--master-seed-hex`.
+
+Lithtrix **never** accepts `master_seed` on any HTTP route. Derivation is **client-side only**.
+
+## Reference implementations (MIT)
+
+| Language | Path |
+| -------- | ---- |
+| Python | `lithtrix-api/scripts/derive_passport.py` (imports `app.services.passport_derivation`) |
+| JavaScript | `lithtrix-mcp/lib/derive-passport.js` |
+| MCP (local) | `lithtrix_passport_derive` in **`lithtrix-mcp` 0.13.0+** — reads `LITHTRIX_PASSPORT_MASTER_SEED` from env; never POSTs seed to the API |
+
+```bash
+# Python CLI
+cd lithtrix-api
+python scripts/derive_passport.py \
+  --agent-id aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa \
+  --master-seed-text 'my-operator-passphrase'
+```
+
+Shared test vectors live in `lithtrix-api/tests/fixtures/passport_derivation_vectors.json`.
+
+## Register with operator-derived public key
+
+```json
+POST /v1/register
+{
+  "agent_name": "my-sandbox-agent",
+  "owner_identifier": "ops@example.com",
+  "agree_to_terms": true,
+  "passport_public_key": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----\n"
+}
+```
+
+When **`passport_public_key`** is **omitted**, behavior is unchanged: Lithtrix generates the keypair server-side and returns **`private_key` once** in the 201 body.
+
+When present:
+
+- Response **`passport.private_key`** is **`null`** with **`derivation_method`: `"operator_derived"`**.
+- `agents.passport_derivation_method` is set to `operator_derived` (observability).
+- A public key already bound to another agent returns **409** `PASSPORT_PUBLIC_KEY_ALREADY_BOUND`.
+
+## Operating safely with master seeds
+
+Treat the master seed like a **root signing key** for every passport you derive from it:
+
+- Prefer **HSM**, **KMS**, or a sealed secret store over plaintext env vars in production.
+- **Rotate** the master seed on compromise or personnel change; re-derive and re-register (or rotate) affected passports.
+- **Wrap** seeds at rest; never commit seeds to git or paste them into Lithtrix support channels.
+
+### Threat model — master seed compromise (pre-mortem #4)
+
+If an attacker obtains your **master seed**, they can derive **every** passport private key for **every** `agent_id` you ever registered with keys derived from that seed — until you rotate the seed and replace the public keys on Lithtrix.
+
+Lithtrix cannot revoke operator-derived private material it never held. Compromise blast radius is **full forgeability** of challenge signatures for all derived agents under that seed. Do not downplay this: use strong seed generation, least-privilege storage, and rotation playbooks.
+
+Operator-held PEM injection (legacy interim pattern in [Passports § sandboxed agents](/passports#onboarding-sandboxed-agents--operator-held-keypair)) remains valid but **deterministic derivation + `passport_public_key` on register** is the preferred path after iter 86.
+
+## Related docs
+
+- [Passports](/passports) — challenge sessions, capability split, MCP tools
+- [Passport migration](/passport-migration) — bearer vs session, `passport_present`
+- Public overview: [https://lithtrix.ai/passports.html](https://lithtrix.ai/passports.html)

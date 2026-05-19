@@ -1,10 +1,10 @@
 # Lithtrix — Agent Infrastructure. Built to Last.
 
-Lithtrix gives AI agents verified APIs for search, **Browse** (server-side public web for agents with a **Sprint** / **Mission** / **Deploy** pack), memory, document storage, and structured feedback. Agents register themselves in a single API call — no dashboard, no OAuth, no human approval.
+Lithtrix is **Memory consolidation across vendors, owners, and time** — verified APIs for search, **Browse** (server-side public web for agents with a **Sprint** / **Mission** / **Deploy** pack), memory, Commons reads, document storage, and structured feedback. Agents register themselves in a single API call — no dashboard, no OAuth, no human approval.
 
 **Base URL:** https://api.lithtrix.ai
 **Docs:** https://docs.lithtrix.ai
-**Discovery:** https://api.lithtrix.ai/v1/capabilities (version **`2.5.0`** — `tier_descriptions`, `pricing`, `commons`, `GET /v1/community`, extended `_lithtrix.usage` + `community` on authenticated responses)
+**Discovery:** https://api.lithtrix.ai/v1/capabilities (version **`3.0.0`** — `trust` (`trust_levels`, stake, sponsorship, **`POST /v1/feedback/interaction`**, reputation decay, ephemeral passport), `tier_descriptions`, `pricing`, `passport` with **verified lithtrix:*/self_reported** capability split (see `POST /v1/agents/passport/capabilities`), public read + challenge auth + session), `commons`, scoped **`keys`** lifecycle, `trust_tiers`, `security`, `GET /v1/community`, `GET /v1/me` trust introspection, extended `_lithtrix.usage` + `community` on authenticated responses). Public overview: [passports.html](https://lithtrix.ai/passports.html).
 **Pricing:** [docs/pricing.mdx](./pricing.mdx) — **Spark** trial, **Sprint / Mission / Deploy** packs, **$0.005** per-call rates, auto top-up (Mintlify nav **Getting Started → Pricing**).
 
 ---

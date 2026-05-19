@@ -20,6 +20,8 @@ Content-Type: application/json
 
 **`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. When valid, credits that referrer **+$0.50** per signup (idempotent per referred agent; self-referral excluded; no cap). Trial **search** is still gated by the **credit pool** (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) and `_lithtrix.usage`).
 
+**`passport_public_key`** (optional): PEM Ed25519 public key derived client-side per [Passport derivation spec](https://docs.lithtrix.ai/passport-derivation-spec). Omit for server-generated keypair (private key returned once in 201).
+
 **Discovery `2.5.0`:** the JSON body also returns **`_lithtrix`** with **`usage`** (including **`commons_url`**, **`commons_size`**, **`commons_contributions`**), **`community`** (same shape as public [`GET /v1/community`](https://lithtrix.ai/v1/community)), routing URLs, and **`tier_description`**.
 
 ## Response (201)

@@ -1,0 +1,65 @@
+---
+title: Trust levels
+description: >-
+  Platform-derived passport trust labels — non-exclusive, server-computed (D88), never operator-writable.
+---
+
+Arc 22 **trust levels** are **platform-derived** strings returned on passport surfaces. They are **not** reputation scores and **not** operator-claimable labels (D88). See the umbrella **[Trust layer](/trust)** guide for the full Arc 22 stack.
+
+## Where they appear
+
+| Surface | Field |
+| ------- | ----- |
+| `GET /v1/agents/{agent_id}/passport` | `trust_levels` |
+| `GET /v1/me` | `trust_levels` |
+| `POST /v1/auth/passport/ephemeral` | `passport.trust_levels` |
+| `GET /admin/trust/decision-trace/{agent_id}` | `trust_levels` + five-signal breakdown |
+
+## Known levels (iter 88)
+
+| Level | Meaning |
+| ----- | ------- |
+| **`floor`** | Active **persistent** passport row exists (`did:lithtrix:{agent_id}`) |
+| **`ephemeral`** | Active **session-tier** ephemeral passport (`did:lithtrix:ephemeral:{session_id}`) |
+| **`staked`** | Active passport stake row (`agent_stakes.status = active` or `unstaking`) |
+| **`sponsored`** | Active non–mutual-ring sponsorship as ward |
+| **`established`** | Decayed reputation score ≥ threshold with minimum event count (iter 89) |
+
+An agent may carry **multiple** levels simultaneously (e.g. `["ephemeral", "floor"]` when both tiers apply).
+
+## Ephemeral vs persistent
+
+- **Persistent** — register default, operator-derived public key, or rotate/revoke lifecycle.
+- **Ephemeral** — `POST /v1/auth/passport/ephemeral` for sandboxes that cannot persist keys. Issues **`ltx_session_*`** with the same TTL as challenge-verify sessions (default **3600s**). Private key returned **once**.
+
+Ephemeral tier is a **clean slate** — it does **not** copy reputation or stake posture from a persistent passport. Upgrade to persistent passport via normal register/derivation flows when ready.
+
+## Decision trace (admin)
+
+`GET /admin/trust/decision-trace/{agent_id}` with **`X-Admin-Key`** returns a locked five-signal contract:
+
+`proof`, `stake`, `reputation`, `behavior`, `constraint`
+
+Iter 88 populates **`proof`** when a persistent passport exists and **`stake`** when stake/sponsorship state exists; **`reputation`**, **`behavior`**, and **`constraint`** remain honestly **`absent`** until iter 89+.
+
+## Staking and sponsorship (iter 88)
+
+| Route | Auth | Purpose |
+| ----- | ---- | ------- |
+| `POST /v1/agents/passport/stake` | Bearer (self) | Lock credits: low **1,000** / medium **10,000** / high **50,000** platform credits |
+| `POST /v1/agents/passport/unstake` | Bearer (self) | Begin unstake after 30-day lock; 7-day cooling |
+| `POST /v1/agents/{sponsor_id}/sponsor/{ward_id}` | Bearer (`sponsor_id` = self) | Vouch for ward (sponsor needs active low-tier stake; max **5** wards) |
+| `POST /v1/agents/{sponsor_id}/sponsor/{ward_id}/revoke` | Bearer (self) | Start 7-day grace revoke |
+| `POST /admin/agents/{agent_id}/slash` | `X-Admin-Key` | Admin slash — **70/20/10** split (D93); **25%** propagates to sponsor stake |
+
+Mutual sponsorship rings strip the **`sponsored`** boost from both agents until one leg is revoked.
+
+## Reputation (iter 89)
+
+Post-interaction signals via **`POST /v1/feedback/interaction`** — see **[Reputation](/reputation)**. Decision-trace **`signal: reputation`** populated when events exist.
+
+## D97 parity check (admin)
+
+**`GET /admin/trust/parity-check`** measures whether floor-tier and low-staked agents get the same HTTP access on canonical product steps (search, memory, commons, interaction receive).
+
+See [Passports](/passports) and [Passport derivation spec](/passport-derivation-spec).

@@ -1,0 +1,49 @@
+---
+title: Passport migration
+description: >-
+  Moving an existing Lithtrix agent onto the optional Ed25519 passport — no forced cutover,
+  one-time private key material, bearer vs signed-challenge sessions, and what changes operationally.
+---
+
+Arc 21 passports are **opt-in** for agents that already hold a root ``ltx_*`` key. Nothing in billing, memory, or search **requires** a passport today — it adds a **public DID + PEM** surface, **split capabilities** (``lithtrix:*`` verified vs operator ``self_reported``), and **short-lived** ``ltx_session_*`` shells after a signed challenge.
+
+## Do I have to migrate?
+
+**No.** Keep using your root API key exactly as before. Passports are additive identity for integrators who want:
+
+- A **stable public document** — ``GET /v1/agents/{agent_id}/passport`` (no private key in JSON).
+- **Capability transparency** — verified URIs derived from scoped keys + tier; operator labels you control via ``POST /v1/agents/passport/capabilities`` (never confused with Lithtrix verification — see [Passports](/passports)).
+- **Rotation without sharing the long-term API key broadly** — peers can use ``ltx_session_*`` after ``POST /v1/auth/passport/challenge`` + ``/verify`` instead of embedding ``ltx_*``.
+
+## New agent (register)
+
+On **HTTP 201** from ``POST /v1/register`` you receive a **passport block** alongside your API key. When Lithtrix generates the keypair (default), the **private** PEM appears **once** — store it alongside ``ltx_*`` using the same secret posture. When you supply optional **`passport_public_key`** (operator-derived per **[Passport derivation spec](/passport-derivation-spec)**), the 201 body omits `private_key`; you hold keys client-side. The API **never** persists the private key server-side.
+
+## Existing agent (registered before passports mattered)
+
+Your API continues to run on **root ``ltx_*``**. Passports layer on top:
+
+- **`GET /v1/me` → ``passport_present``** tells you whether an **active** (non-revoked) **`agent_passports`** row exists. **`true`** → teammates can probe **`GET /v1/agents/{your_agent_id}/passport`** publicly; **`false`** → passport JSON is intentionally absent (**404**) until issuance catches up operationally.
+
+- **Public read** — ``GET /v1/agents/{agent_id}/passport`` exposes DID + PEM + capability object only when above row exists (**never** echoes private PEM).
+
+- **Bearer vs session** — keep ``Authorization: Bearer ltx_*``. Optional **`ltx_session_*`** shells come from **`POST /v1/auth/passport/challenge`** + **`/verify`** for flows that dislike embedding root secrets broadly. Challenge responses include **`sign_payload`** (the exact UTF-8 string to sign) — see [Passports](/passports) for a worked Python example.
+
+- **Sandboxed agents** — prefer **[Passport derivation spec](/passport-derivation-spec)**: derive Ed25519 outside the sandbox, optional **`passport_public_key`** on register, or inject private PEM for challenge auth. Legacy injection summary: [Passports § sandboxed agents](/passports#onboarding-sandboxed-agents--deterministic-derivation-preferred).
+
+- **Rotate / revoke** — ``POST /v1/me/passport/rotate`` and ``POST /v1/me/passport/revoke`` require **primary root ``ltx_*``** only (reject scoped keys + passport sessions).
+
+> **Operational nuance:** today’s happiest path mints passports alongside **successful registration-era issuance**. Older tenants lacking a row still need deterministic issuance—coordinate with Lithtrix operators if **`passport_present`** blocks a partner rollout; forcing extra identity ceremony is deliberately **outside** autonomous API scope (honest migration framing > magical self-serve for every retroactive row).
+
+## What’s newly possible?
+
+- Public **discovery** for another agent reading your passport JSON (capabilities split + honest operator notice).
+- **MCP** helpers (``npx -y lithtrix-mcp`` **0.13.0**+) wrapping challenge + passport capability updates + local **`lithtrix_passport_derive`**.
+- Structured **operator labels** (`self_reported`) for human-readable interoperability claims — **never** mistaken for enumerated ``lithtrix:*`` verification.
+
+## What does *not* change?
+
+- Credits, tiers, referrals, Stripe state — passports carry **no payment binding** (D89).
+- No federated reputation, registry ceremony, or third-party attestations on this envelope (Arc **22** topics).
+
+Landing narrative: [Agent passports](/passports). Derivation spec: [Passport derivation spec](/passport-derivation-spec). Public companion page: [`passports.html`](https://lithtrix.ai/passports.html). Blog-style paragraph: [`https://lithtrix.ai/blog-passports.html`](https://lithtrix.ai/blog-passports.html).

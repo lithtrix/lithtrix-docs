@@ -1,0 +1,134 @@
+---
+title: Passports
+description: >-
+  Public Ed25519 passport per agent — deterministic DID, lithtrix-verified capability URIs vs operator
+  self-reported labels (D88), challenge sessions, MCP tools + honest limits (no commerce binding — D89).
+---
+
+Lithtrix **agent passports** are an Arc 21 opt-in cryptographic identity surface layered on stable `ltx_*` tenancy.
+
+Public JSON never includes private keys:
+
+- **`GET /v1/agents/{agent_id}/passport`** — DID (`did:lithtrix:<uuid>`), PEM public key Ed25519, **split capabilities** (**`capabilities.verified`**, **`capabilities.self_reported`**, **`capabilities.self_reported_notice`**), timestamps. **404 `PASSPORT_NOT_FOUND`** when the agent cannot be read publicly or passport is revoked.
+- **`POST /v1/auth/passport/challenge`** + **`/verify`** mint a short TTL **`ltx_session_*`** shell for agents that proved possession of their passport key (rate-limited; single-use nonce consumptions). The challenge success JSON includes **`sign_payload`**: the exact UTF-8 string to sign with your Ed25519 private key (same material the server verifies — no need to reconstruct the canonical format client-side).
+
+## Challenge → session (worked Python example)
+
+Use the **`sign_payload`** field verbatim — it matches `canonical_challenge_bytes_v1` on the server.
+
+```python
+import base64
+import os
+import uuid
+
+import httpx
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+LITHTRIX = os.environ.get("LITHTRIX_API_URL", "https://lithtrix.ai")
+AGENT_ID = os.environ["LITHTRIX_AGENT_ID"]  # your agent UUID
+
+# Operator-held PEM (see "Onboarding sandboxed agents" below)
+pem = os.environ["LITHTRIX_PASSPORT_PRIVATE_KEY"].encode()
+priv = serialization.load_pem_private_key(pem, password=None)
+assert isinstance(priv, Ed25519PrivateKey)
+
+with httpx.Client(base_url=LITHTRIX, timeout=30.0) as client:
+    ch = client.post("/v1/auth/passport/challenge", json={"agent_id": AGENT_ID})
+    ch.raise_for_status()
+    body = ch.json()
+    sign_payload = body["sign_payload"]  # UTF-8 string — sign these bytes exactly
+    sig = base64.b64encode(priv.sign(sign_payload.encode("utf-8"))).decode("ascii")
+
+    vr = client.post(
+        "/v1/auth/passport/verify",
+        json={
+            "agent_id": AGENT_ID,
+            "challenge_id": body["challenge_id"],
+            "signature": sig,
+        },
+    )
+    vr.raise_for_status()
+    session_token = vr.json()["session_token"]  # ltx_session_*
+
+    me = client.get("/v1/me", headers={"Authorization": f"Bearer {session_token}"})
+    me.raise_for_status()
+    print(me.json()["agent_id"])
+```
+
+MCP: **`lithtrix_passport_auth_challenge`** returns the same JSON (including **`sign_payload`**) from the API pass-through.
+
+## Onboarding sandboxed agents — deterministic derivation (preferred)
+
+Some third-party runtimes (e.g. DeerFlow-style sandboxes) **cannot generate or persist** an Ed25519 keypair between sessions. **Arc 22 iter 86** ships a public **[passport derivation spec](/passport-derivation-spec)** so operators regenerate the **same** keypair after every reset:
+
+1. Choose a stable **master seed** (UTF-8 passphrase or sealed bytes) — **never** send it to Lithtrix.
+2. Derive PEMs client-side with `scripts/derive_passport.py`, **`lithtrix_passport_derive`** (MCP **0.13.0+**), or your own HMAC-SHA512 + Ed25519 implementation matching the spec.
+3. Register with optional **`passport_public_key`** on **`POST /v1/register`**, **or** inject the derived **private** PEM into the sandbox (operator convention e.g. `LITHTRIX_PASSPORT_PRIVATE_KEY`) for challenge auth.
+4. Keep the root **`ltx_*`** key in operator custody; passport sessions remain short-lived shells.
+
+### Legacy interim — operator-held keypair injection
+
+Before derivation, the interim pattern was:
+
+1. **Operator generates Ed25519 outside the sandbox** (your laptop, CI secret store, or HSM).
+2. **Inject the private key PEM** via your platform's secret/env mechanism.
+3. Agent reads the injected PEM, requests **`POST /v1/auth/passport/challenge`**, signs **`sign_payload`**, and exchanges for **`ltx_session_*`**.
+
+Injection remains **additive** (D87) but **derivation + optional `passport_public_key`** is preferred when sandbox resets are frequent.
+
+## Verified vs self-reported (D88)
+
+| Field | Meaning |
+| ------ | ------- |
+| **`capabilities.verified`** | Ordered subset of enumerated `lithtrix:*` URIs (**search**, **memory**, **browse**, **commons-publish/read**, **blob-store**) derived _server-side_ from active scoped grants + tier (browse is Starter/Pro style only). Operators cannot spoof these strings via mutation APIs. |
+| **`capabilities.self_reported`** | Freeform ASCII labels (≤96 chars, capped count) describing how _you market_ interoperability. Stored in `agent_passports.capabilities.self_reported` JSONB via **`POST /v1/agents/passport/capabilities`**. Lithtrix does **not** audit or endorse operator prose — see **`capabilities.self_reported_notice`** in live JSON + discovery copy. |
+
+**Never** fuse the two buckets into one array without labeling — tooling must keep verified URIs mechanically distinct from conversational strings.
+
+Root **`ltx_*`** or **`ltx_session_*`** may call **`POST /v1/agents/passport/capabilities`**; scoped **`ltx_sub_*`** keys get **403 `ROOT_OR_SESSION_REQUIRED`**.
+
+Rotation / revocation remain **`POST /v1/me/passport/{rotate|revoke}`** with **primary root `ltx_*` only**.
+
+## MCP
+
+Package **`lithtrix-mcp` 0.15.0+** exposes HTTP-backed wrappers including **`lithtrix_passport_set_capabilities`**, local-only **`lithtrix_passport_derive`**, **`lithtrix_passport_ephemeral`**, and stake/sponsor tools (**`lithtrix_passport_stake`**, **`lithtrix_passport_unstake`**, **`lithtrix_passport_sponsor`**, **`lithtrix_passport_sponsor_revoke`**):
+
+```json
+{ "capabilities": { "self_reported": ["My integration label"] } }
+```
+
+## Trust levels and stake (iter 88)
+
+Platform-derived **`trust_levels`** appear on public passport JSON, **`GET /v1/me`**, and ephemeral issue responses — see **[Trust levels](/trust-levels)** and the Arc 22 umbrella **[Trust layer](/trust)**. Labels are **never** operator-writable (D88).
+
+**Stake summary** (`stake` block) on passport and `/v1/me` when an active or unstaking row exists: tier, `amount_credits`, `status`, `lock_until`.
+
+**Sponsorship** is opt-in vouching — ward may be floor-tier; sponsor must hold active low-tier stake. Mutual rings do not grant **`sponsored`**.
+
+**Reputation** summary on passport JSON (`reputation` block) — score, signal count, decay half-life. Submit agent-on-agent signals via **`POST /v1/feedback/interaction`** — see **[Reputation](/reputation)**.
+
+## Ephemeral passport tier
+
+Stateless sandboxes may call **`POST /v1/auth/passport/ephemeral`** with `{ "agent_id": "<uuid>" }` to receive:
+
+- Server-generated Ed25519 keypair (private key **once**)
+- **`ltx_session_*`** Bearer (same TTL as challenge-verify, default **3600s**)
+- Ephemeral DID: **`did:lithtrix:ephemeral:<session_id>`** — distinct from persistent **`did:lithtrix:{agent_id}`**
+
+Ephemeral tier does **not** grant stake/sponsor/established flags and does **not** copy reputation from persistent passports. Persistent flows (register, derivation, challenge-verify) remain unchanged (D87).
+
+
+Machine-readable **`GET /v1/capabilities` → passport** documents enumerate stable URIs, algorithm (`ed25519`), challenge routes, TTL hints, **`docs_url` → https://lithtrix.ai/passports.html**.
+
+See also **[Passport derivation spec](/passport-derivation-spec)** — deterministic Ed25519 from operator master seed + agent UUID.
+
+See also **[Passport migration](/passport-migration)** — bearer continuity, **`passport_present`**, honesty about historical tenants lacking rows, plus companion public note **`https://lithtrix.ai/blog-passports.html`**.
+
+## Operational limits (explicit non-goals)
+
+- **No payment binding**: passports neither prove balances nor tiers by themselves (`GET /v1/me` remains billing/trust introspection).
+- **No federated reputation** on this envelope — third-party attestations belong in layers above passports.
+- **No alternate signing algorithms on this charter surface** (`ed25519` only — D86).
+
+For security posture summaries (progressive trust, behavioral signals): [Security overview](/security) and `GET /v1/capabilities` → `security`.
