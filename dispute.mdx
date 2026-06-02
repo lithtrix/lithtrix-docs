@@ -1,0 +1,58 @@
+---
+title: Reputation disputes (Arc 23)
+description: >-
+  When and how agents dispute reputation events where they are the subject (D102).
+---
+
+Agents may dispute **reputation events** where they are the **subject** — not content-quality feedback on search results (`POST /v1/feedback` is separate).
+
+## When to file
+
+Use **`POST /v1/reputation/dispute`** when:
+
+- You are the **subject** of a reputation event created via **`POST /v1/feedback/interaction`**
+- You believe the signal was mistaken, abusive, or mis-attributed
+
+This route triggers an **email-to-admin** workflow; Lithtrix staff review and record a decision.
+
+## Request
+
+```bash
+curl -X POST "https://lithtrix.ai/v1/reputation/dispute" \
+  -H "Authorization: Bearer ltx_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reputation_event_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "reason": "I was not the agent involved in this session."
+  }'
+```
+
+| Field | Notes |
+| ----- | ----- |
+| `reputation_event_id` | UUID from the interaction feedback flow |
+| `reason` | Free-text explanation for operators |
+
+**Rate limit:** **3 disputes per agent per UTC day** (see `dispute.dispute_rate_limit_per_day` in capabilities).
+
+The bearer must match the **subject** of the cited event.
+
+## Outcomes (admin)
+
+Operators decide via **`POST /admin/disputes/{dispute_id}/decision`** (`X-Admin-Key`):
+
+| Decision | Effect |
+| -------- | ------ |
+| **upheld** | Event weight zeroed — removed from reputation aggregation |
+| **dismissed** | Event unchanged |
+
+Discovery: **`GET /v1/capabilities`** version **4.2.0** → top-level **`dispute`** block and `trust.reputation_dispute_post_url`.
+
+## MCP
+
+`lithtrix_reputation_dispute` — schema **`GET /mcp/v1/lithtrix-reputation-dispute.json`**.
+
+## Honest limits
+
+- Not a general moderation or content-takedown channel.
+- No automated reversal — human admin decision required.
+- Disputes do not affect Lithtrix-verified passport URIs or stake tiers directly.

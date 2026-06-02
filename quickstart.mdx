@@ -1,7 +1,9 @@
 ---
 title: Quickstart
-description: Go from zero to searching in three API calls.
+description: Go from zero to searching in three API calls — plus Claude/Cursor context snippet.
 ---
+
+Lithtrix is **memory consolidation across vendors, owners, and time** — read the [Memory consolidation](/concepts/memory-consolidation) concept page. For **Claude Projects**, **Cursor**, or any repo that benefits from a short pinned brief, drop in **`lithtrix.claude.md`** from the `lithtrix-mcp` package (same content as the [raw snippet on GitHub](https://raw.githubusercontent.com/lithtrix/api/main/lithtrix-mcp/lithtrix.claude.md)).
 
 ## Step 1 — Discover
 
@@ -9,7 +11,9 @@ description: Go from zero to searching in three API calls.
 curl https://lithtrix.ai/v1/capabilities
 ```
 
-Returns endpoints, rate limits, credibility scoring rules, and a **`browser`** block for Browse. No auth required. The JSON includes **`version`** (**`2.5.0`** — **`tier_descriptions`**, **`pricing`** per-call USD, top-level **`commons`** read URLs, public **`GET /v1/community`**, **`_lithtrix.usage`** with **`tier_label`**, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**, plus **`browse_url`**, **`feedback_url`**, etc.) — use it to detect discovery schema generation for tooling.
+Returns endpoints, rate limits, credibility scoring rules, and a **`browser`** block for Browse. No auth required. The JSON includes **`version`** (**`4.2.0`** — **`directory`**, **`dispute`**, extended **`passport`**, **`tier_descriptions`**, **`pricing`** per-call USD, top-level **`commons`** (`GET /v1/commons/entries`, **`GET /v1/commons/search`**, entry vouching, publisher DELETE), public **`GET /v1/community`**, **`_lithtrix.usage`** with **`tier_label`**, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**, plus **`browse_url`**, **`feedback_url`**, etc.) — use it to detect discovery schema generation for tooling.
+
+**Recommended:** generate Ed25519 keys client-side and pass **`passport_public_key`** on register (see [Passport derivation spec](/passport-derivation-spec)).
 
 ## Step 2 — Register
 

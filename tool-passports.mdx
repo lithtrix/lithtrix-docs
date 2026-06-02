@@ -1,0 +1,104 @@
+---
+title: Tool passports
+description: >-
+  MCP / tool-layer Ed25519 passports — register, rotate, revoke, and public read with optional
+  model_provenance (captured, not verified).
+---
+
+**Arc 28 (G28.0):** Lithtrix extends the Arc 21 agent passport substrate to **tools and MCP servers**. Each registered tool gets a deterministic `tool_id`, Ed25519 keypair, and optional **`model_provenance`** hash declared by the developer.
+
+Same **`ltx_*` account auth** as agent passports — no new account type. Mutating routes require the **root** `ltx_*` key (scoped sub-keys are rejected).
+
+## Register a tool passport
+
+```python
+import httpx
+
+LITHTRIX = "https://api.lithtrix.ai"
+headers = {"Authorization": "Bearer ltx_your_root_key"}
+
+with httpx.Client(base_url=LITHTRIX, headers=headers, timeout=30.0) as client:
+    reg = client.post(
+        "/v1/me/tools",
+        json={"model_provenance": "sha256:abc123..."},
+    )
+    reg.raise_for_status()
+    body = reg.json()
+    tool_id = body["tool_id"]
+    private_pem = body["private_key"]  # shown once — store securely
+```
+
+**201 response fields:** `tool_id`, `passport_did` (`did:lithtrix:tool:{tool_id}`), `public_key`, `private_key`, `model_provenance`, `key_algorithm`, `risk_class`.
+
+Optional **`risk_class`**: `low` (default) or `high` — registrant-declared only; Lithtrix logs, does not verify.
+
+## Public read (no auth)
+
+```python
+with httpx.Client(base_url=LITHTRIX, timeout=30.0) as client:
+    pub = client.get(f"/v1/tools/{tool_id}/passport")
+    pub.raise_for_status()
+    # public_key, model_provenance, agent_id — never private_key
+```
+
+**404 `TOOL_PASSPORT_NOT_FOUND`** when the tool is missing or revoked.
+
+## Rotate and revoke
+
+- **`POST /v1/me/tools/{tool_id}/rotate`** — root key only; optional new `model_provenance`; previous public key honored until `grace_until`.
+- **`POST /v1/me/tools/{tool_id}/revoke`** — root key only; public GET returns **404** after revoke.
+
+## `model_provenance` discipline
+
+**Captured, not verified** — same trust level as `agent_type` self-declaration. Lithtrix stores whatever hash or label the developer submits; consumers compare against their own model-provider queries.
+
+### Model swapped — worked example
+
+1. **Register** with `model_provenance: "sha256:abc123..."` (hash of e.g. `"openai/gpt-4o-2024-05-13"`).
+2. **Silent swap** — developer changes the model but does not rotate. Public GET still shows `"sha256:abc123..."`. Divergence from the provider is the signal.
+3. **Auditable swap** — developer calls **rotate** with a new `model_provenance`. A row in `tool_passport_rotation_events` records the prior hash + timestamp.
+
+## Distinction from `model_attestation_hash`
+
+| Field | Surface | Scope |
+|-------|---------|-------|
+| **`model_provenance`** | Tool passport (`tool_passports`) | Passport-level declaration at register/rotate |
+| **`model_attestation_hash`** | Browse + content feedback only | Per-interaction optional hash on `browse_logs` / `feedback_events` |
+
+See **[Passports](/passports)** for agent-layer passports and **[Browse](/browse)** / feedback docs for interaction-level attestation (G28.1).
+
+## `risk_class` and HITL approval events (G28.3)
+
+Tools declare **`risk_class`**: `low` or `high` at register (and optionally on rotate). Public GET includes the declared value. Lithtrix does **not** intercept MCP calls — client-side enforcement is expected for high-risk tools.
+
+When a human approves a high-risk action, log an immutable event:
+
+```http
+POST /v1/me/approval-events
+Authorization: Bearer ltx_...
+Content-Type: application/json
+
+{"tool_id": "<uuid>", "human_approver_ref": "operator@example.com", "note": "Approved wire transfer"}
+```
+
+List your own events:
+
+```http
+GET /v1/me/approval-events?limit=20
+Authorization: Bearer ltx_...
+```
+
+Events are **append-only** — no PATCH or DELETE routes in Arc 28.
+
+See **[Activity feed](/activity)** for the unified chronological read (`GET /v1/me/activity`).
+
+## Endpoints
+
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/v1/me/tools` | Root `ltx_*` |
+| `POST` | `/v1/me/tools/{tool_id}/rotate` | Root `ltx_*` |
+| `POST` | `/v1/me/tools/{tool_id}/revoke` | Root `ltx_*` |
+| `GET` | `/v1/tools/{tool_id}/passport` | Public |
+
+Discoverable from **`GET /v1/capabilities`** under `passport.tool_passport`.

@@ -1,0 +1,60 @@
+---
+title: Activity feed
+description: Unified authenticated read of browse, content feedback, and HITL approval events.
+---
+
+## Overview
+
+**Arc 28 (G28.4):** `GET /v1/me/activity` returns a single chronological feed for **the authenticated agent only** — merging:
+
+- **browse** — rows from `browse_logs` (no full page `text` body)
+- **feedback** — content feedback from `POST /v1/feedback` (`feedback_events`)
+- **approval** — HITL approval events from `POST /v1/me/approval-events`
+
+Discoverable from **`GET /v1/capabilities`** under `observability.activity_list_url`.
+
+## Request
+
+```http
+GET /v1/me/activity?limit=50&event_types=browse,feedback,approval
+Authorization: Bearer ltx_...
+```
+
+| Param | Rule |
+|-------|------|
+| `limit` | Default 50, max 100 |
+| `cursor` | Opaque pagination cursor from prior `next_cursor` |
+| `event_types` | Optional comma filter: `browse`, `feedback`, `approval` |
+
+## Explicit exclusions
+
+Arc 28 does **not** include in this feed:
+
+- Search interactions
+- `POST /v1/feedback/interaction` reputation signals
+- Workflow lineage graphs or cross-agent federation
+
+HITL is **read assembly only** — Lithtrix does not intercept MCP tool calls server-side.
+
+## Example response
+
+```json
+{
+  "status": "success",
+  "agent_id": "<uuid>",
+  "events": [
+    {
+      "event_type": "browse",
+      "occurred_at": "2026-06-01T12:00:00Z",
+      "browse_id": "<uuid>",
+      "url": "https://example.com",
+      "mode": "static",
+      "browse_status": "success",
+      "model_attestation_hash": null
+    }
+  ],
+  "next_cursor": "2026-06-01T12:00:00Z|<uuid>|browse"
+}
+```
+
+See also **[Tool passports](/tool-passports)** for HITL approval logging and `risk_class` declaration.

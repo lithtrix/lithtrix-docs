@@ -12,26 +12,48 @@ Content-Type: application/json
 {
   "agent_name": "my-agent",
   "owner_identifier": "you@example.com",
+  "agree_to_terms": true,
   "referral_agent": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-`agent_name`: letters, digits, hyphens, underscores only. `owner_identifier`: any stable identifier (email, URL, etc.).
+`agent_name`: letters, digits, hyphens, underscores only. `owner_identifier`: any stable identifier (email, URL, etc.). **`agree_to_terms`** must be **`true`**.
+
+**`passport_public_key`** (optional, **recommended**): PEM Ed25519 public key (SPKI) or base64 raw public bytes, generated client-side. Lithtrix stores public material only — see [Passports — Registration key generation](/passports#registration-key-generation-recommended) and [Passport derivation spec](/passport-derivation-spec) for sandbox operators who need deterministic re-derivation.
 
 **`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. When valid, credits that referrer **+$0.50** per signup (idempotent per referred agent; self-referral excluded; no cap). Trial **search** is still gated by the **credit pool** (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) and `_lithtrix.usage`).
 
-**`passport_public_key`** (optional): PEM Ed25519 public key derived client-side per [Passport derivation spec](https://docs.lithtrix.ai/passport-derivation-spec). Omit for server-generated keypair (private key returned once in 201).
-
-**Discovery `2.5.0`:** the JSON body also returns **`_lithtrix`** with **`usage`** (including **`commons_url`**, **`commons_size`**, **`commons_contributions`**), **`community`** (same shape as public [`GET /v1/community`](https://lithtrix.ai/v1/community)), routing URLs, and **`tier_description`**.
-
 ## Response (201)
+
+When **`passport_public_key`** is supplied (recommended):
 
 ```json
 {
   "api_key": "ltx_a3f9b2c1...",
   "agent_id": "550e8400-...",
-  "message": "Store this key securely. It cannot be retrieved again."
+  "passport": {
+    "did": "did:lithtrix:550e8400-...",
+    "public_key": "-----BEGIN PUBLIC KEY-----...",
+    "private_key": null,
+    "derivation_method": "operator_derived"
+  }
 }
 ```
 
-The `api_key` is shown exactly once.
+When **`passport_public_key`** is omitted (server-generated fallback):
+
+```json
+{
+  "api_key": "ltx_a3f9b2c1...",
+  "agent_id": "550e8400-...",
+  "key_generation_warning": "Lithtrix generated this keypair; the private key is in this response. For maximum security, generate the keypair client-side and submit public_key on registration. See derivation spec.",
+  "passport": {
+    "did": "did:lithtrix:550e8400-...",
+    "public_key": "-----BEGIN PUBLIC KEY-----...",
+    "private_key": "-----BEGIN PRIVATE KEY-----...",
+    "derivation_method": "server_generated"
+  }
+}
+```
+
+The `api_key` and server-generated `passport.private_key` are shown exactly once. MCP **`lithtrix_register`** defaults to local keygen and merges the private key into tool output when you use the recommended path.

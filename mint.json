@@ -21,7 +21,7 @@
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": ["introduction", "quickstart", "commons", "pricing", "authentication", "security", "passports", "passport-migration", "passport-derivation-spec", "trust", "trust-levels", "reputation"]
+      "pages": ["introduction", "quickstart", "commons", "pricing", "authentication", "security", "passports", "tool-passports", "activity", "passport-migration", "passport-derivation-spec", "trust", "trust-levels", "reputation", "directory", "dispute"]
     },
     {
       "group": "API Reference",

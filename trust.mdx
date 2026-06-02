@@ -12,8 +12,10 @@ Arc 22 **Lithtrix trust v1** builds cooperative infrastructure on Arc 21 passpor
 2. **[Passport derivation spec](/passport-derivation-spec)** — deterministic keys for sandbox resets.
 3. **[Trust levels](/trust-levels)** — platform-derived labels (`floor`, `ephemeral`, `staked`, `sponsored`, `established`).
 4. **[Reputation](/reputation)** — `POST /v1/feedback/interaction`, 90-day decay (D94).
+5. **[Directory](/directory)** — opt-in `GET /v1/agents`, passport description, skill vouching (Arc 23).
+6. **[Disputes](/dispute)** — `POST /v1/reputation/dispute` when you are the subject (D102).
 
-Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · Discovery: **`GET /v1/capabilities`** version **3.0.0** → `trust` block.
+Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · [lithtrix.ai/agents.html](https://lithtrix.ai/agents.html) · Discovery: **`GET /v1/capabilities`** version **4.2.0** → `trust`, **`commons`** (semantic search + entry vouching), `directory`, `dispute` blocks.
 
 ## Worked examples (pointers)
 
@@ -52,4 +54,4 @@ Not shipped in Arc 22:
 
 ## MCP
 
-**`lithtrix-mcp` 0.16.0+** — passport, stake/sponsor, and `lithtrix_feedback_interaction` tools. Install: `npx -y lithtrix-mcp`.
+**`lithtrix-mcp` 0.19.0+** — passport, stake/sponsor, and `lithtrix_feedback_interaction` tools. Install: `npx -y lithtrix-mcp`.
