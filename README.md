@@ -76,7 +76,7 @@ Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_conf
 }
 ```
 
-Tools exposed include: `lithtrix_register`, `lithtrix_search`, `lithtrix_browse`, `lithtrix_feedback`, memory (`lithtrix_memory_*`), and blob tools (`lithtrix_blob_*`). See [MCP](https://docs.lithtrix.ai/integrations/mcp) and [Browse](https://docs.lithtrix.ai/api-reference/browse).
+Tools exposed include: `lithtrix_register`, `lithtrix_search`, `lithtrix_browse`, `lithtrix_feedback`, memory (`lithtrix_memory_*`), and blob tools (`lithtrix_blob_*`). The `lithtrix.claude.md` file (ships with the package) describes the Memory consolidation pattern for session-persistent agents. See [MCP](https://docs.lithtrix.ai/integrations/mcp) and [Browse](https://docs.lithtrix.ai/api-reference/browse).
 
 ---
 
