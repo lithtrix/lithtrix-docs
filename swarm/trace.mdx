@@ -1,0 +1,35 @@
+---
+title: Task trace
+description: Audit transitions for a delegated task
+---
+
+# Trace
+
+**MCP:** `lithtrix_trace_append`, `lithtrix_trace_get`  
+**REST:**
+- Append: `POST /v1/tasks/{task_id}/trace/events`
+- Read: `GET /v1/tasks/{task_id}/trace`
+
+**Auth:** Task participant only — parent or recipient on any delegation for `task_id`.
+
+## Append body
+
+```json
+{
+  "proposed_action": "memory.put",
+  "delegation_id": "<uuid from delegate>",
+  "decision": "allowed",
+  "outcome": "written",
+  "scope_json": { "write_set": ["memory"] },
+  "evidence_json": { "key": "memory/brief" },
+  "advisory_claims": ["memory", "memory:extra"]
+}
+```
+
+Use **`delegation_id`** — not `authority`. Trace **records only**; no runtime veto.
+
+Optional `advisory_claims` overreach vs contract `write_set` is stored in `advisory_discrepancy`.
+
+## Participants
+
+Cross-tenant access returns `403 TASK_TRACE_ACCESS_DENIED` with teaching fields (`what`, `fix`, `doc`).

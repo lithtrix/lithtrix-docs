@@ -1,0 +1,48 @@
+---
+title: Delegate with signing
+description: Client-side Ed25519 signing for delegation contracts
+---
+
+# Delegate
+
+**MCP:** `lithtrix_delegate` (signs locally — do not pass `signature` manually)  
+**REST:** `POST /v1/agents/{parent_agent_id}/delegate`  
+**Auth:** Root `ltx_*` + active passport on parent.
+
+## Contract shape
+
+Request field name is **`contract`** (not `contract_json`).
+
+```json
+{
+  "read_set": ["memory"],
+  "write_set": ["memory"],
+  "assumptions": {},
+  "version_refs": [],
+  "ttl_seconds": 3600,
+  "verifier_obligations": null,
+  "conflict_policy": "last_writer_wins_audit"
+}
+```
+
+`conflict_policy` must be exactly **`last_writer_wins_audit`** (underscores, not hyphens).
+
+## Signing (`sign_payload`)
+
+UTF-8 bytes to sign:
+
+```
+lithtrix.delegation.contract.v1\n
+<recipient_agent_id_uuid>\n
+<task_id_uuid>\n
+<contract_json_minified_sorted_keys_utf8>
+```
+
+Sign with your passport Ed25519 private key → RFC4648 base64 raw signature.
+
+**MCP:** set `LITHTRIX_PASSPORT_MASTER_SEED` or `LITHTRIX_PASSPORT_PRIVATE_KEY`.  
+**Operator-derived keys:** see [Passports — operator-derived keys](/passports#operator-derived-keys).
+
+## Response
+
+Returns `delegation_id`, `task_id`, and `_lithtrix.next_tool: lithtrix_trace_append`.

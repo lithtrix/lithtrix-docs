@@ -1,0 +1,22 @@
+---
+title: Spawn swarm children
+description: POST /v1/agents/{parent_agent_id}/spawn
+---
+
+# Spawn
+
+**MCP:** `lithtrix_spawn`  
+**REST:** `POST /v1/agents/{parent_agent_id}/spawn`  
+**Auth:** Root `ltx_*` only; `parent_agent_id` must match your agent id.
+
+## Parameters
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `scope` | `memory-only` | One of: `read-only`, `memory-only`, `search-only`, `commons-publish`, `browse`, `education-rei`, `education-aiva`, `full` |
+| `ttl_seconds` | omitted | Optional key expiry hint |
+| `agent_name` | server-generated | Optional child display name |
+
+## Response
+
+Returns `child_agent_id`, one-time `api_key` for the child, and `_lithtrix.next_tool: lithtrix_delegate`.

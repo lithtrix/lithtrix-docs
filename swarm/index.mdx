@@ -1,0 +1,24 @@
+---
+title: Swarm primitives
+description: Spawn, delegate, and audit multi-agent tasks on Lithtrix
+---
+
+# Swarm primitives
+
+Lithtrix is the **trust and audit layer** for multi-agent swarms — not a workflow engine.
+
+Register once, spawn scoped sub-agents with keys that expire, hand off work with a signed contract that says exactly what each agent may read and write, and pull a single audit trace for the whole task.
+
+## MCP flow (recommended)
+
+1. `lithtrix_register` — include `passport_public_key` or configure `LITHTRIX_PASSPORT_MASTER_SEED`
+2. `lithtrix_spawn` — creates child + scoped sub-key
+3. `lithtrix_delegate` — signs locally; returns `task_id` + `delegation_id`
+4. `lithtrix_trace_append` — records audit transition
+5. `lithtrix_trace_get` — reads full chain
+
+See [Spawn](/swarm/spawn), [Delegate](/swarm/delegate), [Trace](/swarm/trace).
+
+## Discovery
+
+`GET /v1/capabilities` → `swarm` block includes endpoints, `conflict_policy_allowed`, signing format, and MCP tool names.
