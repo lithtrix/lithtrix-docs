@@ -43,6 +43,29 @@ Sign with your passport Ed25519 private key → RFC4648 base64 raw signature.
 **MCP:** set `LITHTRIX_PASSPORT_MASTER_SEED` or `LITHTRIX_PASSPORT_PRIVATE_KEY`.  
 **Operator-derived keys:** see [Passports — operator-derived keys](/passports#operator-derived-keys).
 
+## Signing test vector
+
+Verify your implementation locally before hitting the live API. **TEST ONLY — do not use this private key in production.**
+
+| Field | Value |
+|-------|-------|
+| `recipient_agent_id` | `aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee` |
+| `task_id` | `11111111-2222-3333-4444-555555555555` |
+| `contract` (minified, sorted keys) | `{"assumptions":{},"conflict_policy":"last_writer_wins_audit","read_set":["memory"],"ttl_seconds":3600,"verifier_obligations":null,"version_refs":[],"write_set":["memory"]}` |
+| Ed25519 private seed (hex) | `0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef` |
+| Expected signature (base64) | `LIxXYXgfJqTGRblhdHQovWaVxdGPeVHzYNakLtpE9MCeGlFzXraL9Bbjwf9FDX/ehjXH9znNnhTyexqepSJ8Aw==` |
+
+Canonical UTF-8 string to sign (exact bytes):
+
+```
+lithtrix.delegation.contract.v1
+aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+11111111-2222-3333-4444-555555555555
+{"assumptions":{},"conflict_policy":"last_writer_wins_audit","read_set":["memory"],"ttl_seconds":3600,"verifier_obligations":null,"version_refs":[],"write_set":["memory"]}
+```
+
+`POST /v1/auth/passport/verify` is the challenge→session passport flow — **not** a delegation signing debug endpoint.
+
 ## Response
 
-Returns `delegation_id`, `task_id`, and `_lithtrix.next_tool: lithtrix_trace_append`.
+Returns `delegation_id`, `task_id`, and (MCP only) `_lithtrix.next_tool: lithtrix_trace_append`.

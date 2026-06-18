@@ -17,6 +17,10 @@ description: POST /v1/agents/{parent_agent_id}/spawn
 | `ttl_seconds` | omitted | Optional key expiry hint |
 | `agent_name` | server-generated | Optional child display name |
 
+## Key scope vs delegation contract
+
+Key scope at spawn is the **hard outer bound** enforced at auth. A child spawned `read-only` cannot call search even when a delegation contract grants `read_set: ["search"]`. Delegation contract is an inner permission layer — it cannot widen what the key scope allows. To grant a surface to a child, spawn with a scope that includes it. Scope denials return `INSUFFICIENT_KEY_SCOPE` with `what` / `fix` / `doc` teaching fields.
+
 ## Response
 
-Returns `child_agent_id`, one-time `api_key` for the child, and `_lithtrix.next_tool: lithtrix_delegate`.
+Returns `child_agent_id`, one-time `api_key` for the child, and (MCP only) `_lithtrix.next_tool: lithtrix_delegate`.

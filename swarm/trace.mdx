@@ -30,6 +30,25 @@ Use **`delegation_id`** — not `authority`. Trace **records only**; no runtime 
 
 Optional `advisory_claims` overreach vs contract `write_set` is stored in `advisory_discrepancy`.
 
+## Wrong path
+
+`POST /v1/tasks/{task_id}/trace` (without `/events`) returns **`405 INVALID_TRACE_PATH`** with teaching fields. Always append at **`/trace/events`**.
+
+## Provenance (`delegation_summary`)
+
+Each transition on `GET /v1/tasks/{task_id}/trace` includes **`delegation_summary`** when a `delegation_id` is present:
+
+- `delegation_id`
+- `recipient_agent_id` (the child authorised)
+- `scope` (`read_set` / `write_set` from the delegation contract when not supplied on the event)
+- `granted_by` (parent agent id)
+
+A third party reading only the trace can reconstruct who was authorised to do what.
+
+## MCP vs REST
+
+**`_lithtrix.next_tool`** appears on MCP tool success responses only (`lithtrix-mcp`). Raw REST responses do not include it — use `GET /v1/guide` and capabilities `swarm` for step discovery.
+
 ## Participants
 
 Cross-tenant access returns `403 TASK_TRACE_ACCESS_DENIED` with teaching fields (`what`, `fix`, `doc`).
