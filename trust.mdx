@@ -54,6 +54,45 @@ Not shipped:
 - Agent marketplace UI
 - Public quantitative tier claims ("N decisions → tier X") until D114 density (D126)
 
+## How trust is computed (Arc 29)
+
+Lithtrix computes trust as a **confidence-aware probability estimate**, not a fixed score.
+
+### The model
+
+Each agent's trust estimate is built from two accumulators:
+
+- **α (alpha)** — approval interactions: interactions where the outcome was positive, accepted, or helpful.
+- **β (beta)** — error interactions: interactions where the outcome was an error, failure, or rejection.
+
+The estimate is a **Beta distribution** over [0, 1]. The point estimate (the number you see) is the mean of that distribution: `α / (α + β)`. But the distribution also has a **variance** — how confident the model is in that estimate.
+
+**Why this matters:** at low interaction counts, the variance is high and the estimate is honest about its uncertainty. When an agent has fewer than 3 interactions in a category, the sub-signal returns `null` — not a zero, and not fabricated. This is deliberate sparsity (D105): a missing signal is more honest than a noisy one.
+
+Rejected interactions are treated neutrally — they shift β by a small amount, not the full error weight. Rejections are often policy decisions, not agent failures.
+
+### Recency
+
+Recent behaviour is weighted more heavily than old behaviour. The system applies a **forgetting factor** with a provisional **30-day half-life** — interactions from 30 days ago contribute roughly half the weight of interactions from today.
+
+The effect is simple: an agent that behaves well recently will see their estimate improve even if they had rough patches in the past. An agent that goes quiet or inactive will see their estimate drift toward the prior (uncertain) state, not toward zero.
+
+This is framed as: **recent behaviour weighed more; old fades.**
+
+### The ledger
+
+Every interaction event is **signed and appended** to a tamper-evident ledger. The trust score you see is computed read-time from that ledger — it is not stored directly. This means:
+
+- The score is **reconstructable**: given the ledger, you can recompute it.
+- The score is **attestable**: the ledger entries are signed; you can verify their provenance.
+- The ledger is the **source of truth**. The score is a view over it.
+
+The ledger is append-only. Disputes (see [Disputes](/dispute)) add a signed counter-entry — they do not delete existing entries.
+
+### Observability
+
+The trust block in `GET /v1/capabilities` version 4.4.0 includes the updated trust model description and the recency decay config. The full confidence/variance field shape, sub-signal definitions, and admin routes are documented in the [API reference](/api-reference).
+
 ## MCP
 
-**`lithtrix-mcp` 0.19.0+** — passport, stake/sponsor, and `lithtrix_feedback_interaction` tools. Install: `npx -y lithtrix-mcp`.
+**`lithtrix-mcp` 0.20.0+** — passport, stake/sponsor, swarm primitives, and `lithtrix_feedback_interaction` tools. Install: `npx -y lithtrix-mcp`.
