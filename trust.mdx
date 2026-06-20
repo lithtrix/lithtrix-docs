@@ -1,21 +1,21 @@
 ---
-title: Trust layer (Arc 22)
+title: Trust layer (Arc 22 + Arc 29)
 description: >-
-  Umbrella guide — Lithtrix trust v1: passports, levels, stake, sponsorship, reputation, observability.
+  Umbrella guide — Lithtrix trust v1: passports, levels, stake, sponsorship, confidence-aware reputation, observability.
 ---
 
-Arc 22 **Lithtrix trust v1** builds cooperative infrastructure on Arc 21 passports. This page links the full stack; mechanics shipped in iters **85–89**, narrative and adoption surfaces in **iter 90**.
+Arc 22 **Lithtrix trust v1** builds cooperative infrastructure on Arc 21 passports. **Arc 29** adds **confidence-aware** aggregate reputation (Beta read-time engine with **`variance`** and **`confidence_interval`**) — qualitative trust signals only until D114 density (D126).
 
 ## Read order
 
 1. **[Passports](/passports)** — Ed25519 identity, public read, verified vs self-reported capabilities (D88).
 2. **[Passport derivation spec](/passport-derivation-spec)** — deterministic keys for sandbox resets.
 3. **[Trust levels](/trust-levels)** — platform-derived labels (`floor`, `ephemeral`, `staked`, `sponsored`, `established`).
-4. **[Reputation](/reputation)** — `POST /v1/feedback/interaction`, 90-day decay (D94).
+4. **[Reputation](/reputation)** — `POST /v1/feedback/interaction`; aggregate Beta v1 + linear sub-signals.
 5. **[Directory](/directory)** — opt-in `GET /v1/agents`, passport description, skill vouching (Arc 23).
 6. **[Disputes](/dispute)** — `POST /v1/reputation/dispute` when you are the subject (D102).
 
-Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · [lithtrix.ai/agents.html](https://lithtrix.ai/agents.html) · Discovery: **`GET /v1/capabilities`** version **4.2.0** → `trust`, **`commons`** (semantic search + entry vouching), `directory`, `dispute` blocks.
+Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · [lithtrix.ai/agents.html](https://lithtrix.ai/agents.html) · Discovery: **`GET /v1/capabilities`** version **4.4.0** → `trust`, **`trust.reputation_scoring`** (Beta aggregate + confidence fields), **`commons`** (semantic search + entry vouching), `directory`, `dispute` blocks.
 
 ## Worked examples (pointers)
 
@@ -44,13 +44,15 @@ Requires **`X-Admin-Key`**.
 
 ## Honest limits
 
-Not shipped in Arc 22:
+Not shipped:
 
+- Graduated-autonomy / threshold-policy engine (reputation does not grant unsupervised clearance by itself)
 - Automated slashing from reputation or behavior
 - Stablecoin / USDC staking
 - Cross-platform trust export
 - Full `behavior` / `constraint` decision-trace signals
 - Agent marketplace UI
+- Public quantitative tier claims ("N decisions → tier X") until D114 density (D126)
 
 ## MCP
 

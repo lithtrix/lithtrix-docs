@@ -11,7 +11,7 @@ Lithtrix is **memory consolidation across vendors, owners, and time** — read t
 curl https://lithtrix.ai/v1/capabilities
 ```
 
-Returns endpoints, rate limits, credibility scoring rules, and a **`browser`** block for Browse. No auth required. The JSON includes **`version`** (**`4.2.0`** — **`directory`**, **`dispute`**, extended **`passport`**, **`tier_descriptions`**, **`pricing`** per-call USD, top-level **`commons`** (`GET /v1/commons/entries`, **`GET /v1/commons/search`**, entry vouching, publisher DELETE), public **`GET /v1/community`**, **`_lithtrix.usage`** with **`tier_label`**, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**, plus **`browse_url`**, **`feedback_url`**, etc.) — use it to detect discovery schema generation for tooling.
+Returns endpoints, rate limits, credibility scoring rules, and a **`browser`** block for Browse. No auth required. The JSON includes **`version`** (**`4.4.0`** — confidence-aware aggregate reputation on passport reads; **`directory`**, **`dispute`**, extended **`passport`**, **`tier_descriptions`**, **`pricing`** per-call USD, top-level **`commons`** (`GET /v1/commons/entries`, **`GET /v1/commons/search`**, entry vouching, publisher DELETE), public **`GET /v1/community`**, **`_lithtrix.usage`** with **`tier_label`**, **`auto_topup`**, **`credits_expire_at`**, **`commons_url`**, **`commons_size`**, **`commons_contributions`**, plus **`browse_url`**, **`feedback_url`**, etc.) — use it to detect discovery schema generation for tooling.
 
 **Recommended:** generate Ed25519 keys client-side and pass **`passport_public_key`** on register (see [Passport derivation spec](/passport-derivation-spec)).
 

@@ -65,7 +65,7 @@ curl -sS -X POST "https://lithtrix.ai/v1/register" \
   -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com"}'
 ```
 
-Registration grants a **Spark trial pack** (~1,000 search calls, 90-day expiry) automatically — no card required.
+Registration grants a **Spark trial pack** (~1,000 search calls, 180-day expiry) automatically — no card required.
 
 ### 3. Search (Bearer)
 
