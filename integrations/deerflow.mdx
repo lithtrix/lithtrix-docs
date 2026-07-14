@@ -1,0 +1,76 @@
+---
+title: DeerFlow Integration
+description: >-
+  Give a stock DeerFlow install portable memory that survives restarts and carries across frameworks — no fork, three config files.
+---
+
+Stock DeerFlow forgets everything between runs. Close the session, lose the context — your agent re-discovers the same sources every time you point her at a topic she's already researched.
+
+We wired a real DeerFlow install to Lithtrix using nothing but configuration. No fork. No DeerFlow code changes. Three files.
+
+## What we added
+
+**1. A skill file** — `skills/public/use-lithtrix/SKILL.md`. DeerFlow auto-discovers skills from this path; no registration step.
+
+```yaml
+---
+name: use-lithtrix
+description: Use this skill at the start and end of every research session to give this DeerFlow instance persistent memory that survives restarts and carries across frameworks. Load Lithtrix memory/commons context before starting research to skip redundant searches on already-explored topics; save vetted findings back to Lithtrix at the end of the session. Trigger whenever LITHTRIX_API_KEY is configured.
+---
+```
+
+**2. An MCP server entry** — merged into the `mcpServers` key of your existing `extensions_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "lithtrix": {
+      "enabled": true,
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "lithtrix-mcp@0.20.2"],
+      "env": {
+        "LITHTRIX_API_KEY": "$LITHTRIX_API_KEY",
+        "LITHTRIX_API_URL": "$LITHTRIX_API_URL"
+      }
+    }
+  }
+}
+```
+
+Merge this into the `mcpServers` key — don't overwrite the file. A stock config already has `mcpInterceptors` and `skills` keys at the top level; replacing the whole file with the snippet above will clobber them.
+
+**3. Two lines in `.env`** — `LITHTRIX_API_KEY` and `LITHTRIX_API_URL`. [Register](/quickstart) to get a key free, no card required — she can register herself.
+
+That's the whole install. Restart DeerFlow, and both panels — Settings → Tools, Settings → Skills — show it enabled. No manual re-registration on subsequent boots; DeerFlow reads the config fresh every time.
+
+## What it does
+
+At the start of a session, the agent pulls her prior memory and checks the shared commons for anything already vetted on the topic — skipping searches she doesn't need to re-run. At the end, she saves what she found back to Lithtrix, so the next session — same agent, same DeerFlow instance, or a completely different framework — starts from where this one left off.
+
+DeerFlow already has session memory. What it doesn't have is somewhere for that memory to go when the session ends. That's the layer this integration adds — not a replacement for DeerFlow's memory, a place for it to live between runs.
+
+## The numbers
+
+Two runs, same registered agent. Run A cold (no Lithtrix prefetch). Run B warm (memory + commons loaded before research starts).
+
+| Metric | Result |
+|---|---|
+| Time to synthesis, warm vs cold | **48.2% faster** |
+| Search calls, warm vs cold | **62.5% fewer** |
+| Commons sources credited on warm run | **5**, counted directly (not estimated) |
+
+These are raw measurements from an instrumented run against the live API, re-verified after a platform-side latency fix (our own round-trips were briefly eating the savings — fixed 2026-07-11; the figures above are post-fix).
+
+## What we're not claiming
+
+- **Not adoption.** We built this, ran it, and measured it ourselves. It's a working reference integration, not a signal that DeerFlow users are adopting Lithtrix.
+- **Not a full DeerFlow UI run.** These numbers come from an instrumented probe hitting the same MCP tools DeerFlow calls — not a start-to-finish session through DeerFlow's own interface. We're confident the substrate numbers are real; we haven't yet measured wall-clock inside a full live DeerFlow research loop end to end.
+- **Not "DeerFlow needs this."** DeerFlow's native memory works fine within a session. This is about what happens after the session ends.
+- **Not production-proven at scale.** This is one agent, two runs, verified once. Treat it as evidence a pattern works, not a benchmark.
+
+## Try it
+
+She can register at [lithtrix.ai](https://lithtrix.ai) free, no card required. Add the three files above to your own DeerFlow install and see what a second run looks like.
+
+See also the [MCP Integration](/integrations/mcp) page for the full `lithtrix-mcp` tool reference.
