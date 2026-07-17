@@ -130,7 +130,7 @@ Returns `agents_total`, `agents_active_30d`, `agents_target`, `percent_to_target
 
 ## Billing — credit packs
 
-All usage is pay-as-you-go. Packs expire **90 days** from purchase.
+All usage is pay-as-you-go. Packs expire **180 days** from purchase.
 
 | Pack | Price | Approx usage | Browse |
 |------|-------|-------------|--------|
