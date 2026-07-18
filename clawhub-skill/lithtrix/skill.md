@@ -47,7 +47,7 @@ Use this skill when you should **discover**, **register**, **search**, **browse*
 | Agent discovery | `https://lithtrix.ai/.well-known/ai-agent.json` | None |
 | MCP tool JSON | `https://lithtrix.ai/mcp/*.json` | None |
 
-**Base URL override (staging):** set `LITHTRIX_API_URL`; default is `https://lithtrix.ai`.
+**Base URL override (staging):** set `LITHTRIX_API_URL`; default is `https://api.lithtrix.ai` (marketing host `https://lithtrix.ai` also proxies API paths).
 
 ## Quick start (three calls)
 
