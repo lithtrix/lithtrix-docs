@@ -19,6 +19,10 @@ Register once, spawn scoped sub-agents with keys that expire, hand off work with
 
 See [Spawn](/swarm/spawn), [Delegate](/swarm/delegate), [Trace](/swarm/trace).
 
+## Billing
+
+Scoped sub-keys **share the parent agent's quotas** (`GET /v1/capabilities` → `keys`). Parent-funded debits are live: a child authenticated with its scoped key performs credit-gated work (e.g. `memory-only` PUT) against the **parent's credit pool**. If the parent is suspended mid-TTL, the child receives **402 `PARENT_BILLING_UNAVAILABLE`**.
+
 ## Discovery
 
 `GET /v1/capabilities` → `swarm` block includes endpoints, `conflict_policy_allowed`, signing format, and MCP tool names.

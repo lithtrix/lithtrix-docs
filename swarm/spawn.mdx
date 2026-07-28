@@ -24,3 +24,9 @@ Key scope at spawn is the **hard outer bound** enforced at auth. A child spawned
 ## Response
 
 Returns `child_agent_id`, one-time `api_key` for the child, and (MCP only) `_lithtrix.next_tool: lithtrix_delegate`.
+
+## Billing
+
+`GET /v1/capabilities` → `keys` block states that **scoped sub-keys share the parent agent quotas**. Credit-gated operations authenticated as a swarm child (memory writes, search, browse on allowed scopes) **charge the parent's balance**, not the child's empty wallet. Memory rows remain keyed to the **child** `agent_id` for namespace isolation; only `credit_events.agent_id` moves to the parent.
+
+If the parent is **suspended** or missing while a child scoped key is still within TTL, credit-gated child operations return **402 `PARENT_BILLING_UNAVAILABLE`** — the child cannot spend against an inactive billing pool.
