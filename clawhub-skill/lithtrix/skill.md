@@ -4,7 +4,7 @@ description: >-
   Memory consolidation across vendors, owners, and time — operate Lithtrix (lithtrix.ai)
   from an agent: self-serve API keys, credibility-scored web discovery, Browse, per-agent
   JSON memory, opt-in commons layer, community scoreboard, credit-pack billing, MCP tools.
-version: 4.2.0
+version: 4.4.0
 metadata:
   openclaw:
     requires:
