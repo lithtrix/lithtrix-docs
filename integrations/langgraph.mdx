@@ -1,0 +1,141 @@
+---
+title: LangGraph Integration
+description: >-
+  Connect LangGraph long-term memory to Lithtrix with LithtrixStore — same agent memory as DeerFlow, no new API endpoints.
+---
+
+LangGraph graphs need a **store** for memory that survives across threads and sessions. Lithtrix already holds that memory per registered agent. `LithtrixStore` is a LangGraph `BaseStore` adapter that reads and writes the same `/v1/memory` REST your MCP tools use — no fork, no new Lithtrix endpoints.
+
+## What it is (and isn't)
+
+**`LithtrixStore`** implements LangGraph's `batch` / `abatch` operations over existing Lithtrix memory HTTP:
+
+- `GET /v1/memory/{key}` — retrieve
+- `PUT /v1/memory/{key}` — upsert (dict values)
+- `DELETE /v1/memory/{key}` — delete via `PutOp` with `value=None`
+- `GET /v1/memory/search` — semantic search
+- `GET /v1/memory?prefix=…` — list keys / namespace derivation
+
+It is a **memory store adapter only**. It does not include Lithtrix's swarm primitives (spawning sub-agents, signed delegation contracts, audit traces) — those exist in the wider Lithtrix API but are not wrapped by this package. Call the REST API directly if you need them.
+
+Distributed on PyPI as [`lithtrix-langgraph`](https://pypi.org/project/lithtrix-langgraph/). LangGraph version is pinned to **`langgraph==1.2.9`**. Source lives in Lithtrix's main repository, which is private — email [hello@lithtrix.ai](mailto:hello@lithtrix.ai) for bugs or feature requests.
+
+## Install
+
+```bash
+pip install lithtrix-langgraph
+```
+
+Requires Python 3.11+. If you're not in a virtual environment, installing into system Python can fail with a permission error — use a venv (`python -m venv .venv && source .venv/bin/activate`) or `pip install --user lithtrix-langgraph` instead.
+
+## 1. Get an API key
+
+Register an agent with a single unauthenticated call — no dashboard, no approval step:
+
+```bash
+curl -X POST https://api.lithtrix.ai/v1/register \
+  -H "Content-Type: application/json" \
+  -H "User-Agent: my-agent/1.0" \
+  -d '{
+    "agent_name": "my-langgraph-agent",
+    "owner_identifier": "you@example.com",
+    "agree_to_terms": true
+  }'
+```
+
+`agent_name` + `owner_identifier` must be unique together — reusing the same pair returns `409`. The response is a full agent record (identity keys, tier info, etc.) — the field you need right now is `api_key` (starts with `ltx_`). **Save it now — it is only ever shown once.**
+
+```bash
+export LITHTRIX_API_KEY=ltx_your_key_here
+```
+
+## 2. Configure the store
+
+```python
+from lithtrix_langgraph import LithtrixStore
+
+store = LithtrixStore()  # reads LITHTRIX_API_KEY from the environment
+```
+
+| Variable | Required | Default |
+|----------|----------|---------|
+| `LITHTRIX_API_KEY` | Yes | — |
+| `LITHTRIX_API_URL` | No | `https://api.lithtrix.ai` |
+
+## 3. Compile with store
+
+```python
+from typing_extensions import TypedDict
+from langgraph.graph import StateGraph
+from langgraph.config import get_store
+from lithtrix_langgraph import LithtrixStore
+
+
+class State(TypedDict):
+    note: str
+
+
+def remember(state: State) -> State:
+    store = get_store()
+    # "my-agent" here is just a namespace prefix you choose for organizing keys —
+    # it has no relationship to the agent_name you registered with above.
+    store.put(("my-agent",), "last-note", {"text": state["note"]})
+    item = store.get(("my-agent",), "last-note")
+    return {"note": item.value["text"]}
+
+
+store = LithtrixStore()
+graph = StateGraph(State)
+graph.add_node("remember", remember)
+graph.set_entry_point("remember")
+graph.set_finish_point("remember")
+compiled = graph.compile(store=store)
+
+result = compiled.invoke({"note": "hello from LangGraph"})
+print(result)  # {'note': 'hello from LangGraph'}
+```
+
+This is the exact example validated against the live production API — most recently by two independent, zero-assistance test runs (2026-08-03), the second completing end to end in 3.5 minutes with no errors.
+
+See the [package README on PyPI](https://pypi.org/project/lithtrix-langgraph/) for the full key-mapping table, `SearchOp` supported subset, and value-wrapping rules.
+
+## Cross-framework (DeerFlow → LangGraph)
+
+Memory written during a [DeerFlow](/integrations/deerflow) session uses flat keys such as `deerflow:rung1:mcp-interop-2025:findings`. A LangGraph graph on the **same** `LITHTRIX_API_KEY` reads that key with an **empty namespace**:
+
+```python
+store.get((), "deerflow:rung1:mcp-interop-2025:findings")
+```
+
+String values from DeerFlow Rung 1 arrive wrapped as `{"content": "<string>"}`. This follows directly from the key-mapping rule below — an empty namespace tuple passes the key through unchanged.
+
+## Key mapping
+
+LangGraph's `(namespace_tuple, key)` gets flattened into a single Lithtrix key, since Lithtrix keys are flat strings (1–128 chars, charset `[a-zA-Z0-9-_.:]`):
+
+| LangGraph call | Lithtrix key |
+|----------------|--------------|
+| `get((), "deerflow:rung1:mcp-interop-2025:findings")` | `deerflow:rung1:mcp-interop-2025:findings` |
+| `get(("deerflow", "rung1", "mcp-interop-2025"), "findings")` | same |
+
+Values are capped at **512 KiB** per key (local preflight check + API enforcement).
+
+## What we're not claiming
+
+- **Not adoption.** We built and instrumented this integration ourselves. It is a working reference, not evidence of LangGraph user adoption.
+- **Not "LangGraph needs this."** LangGraph's built-in stores work without Lithtrix. This adapter is for agents that already register on Lithtrix and want portable memory.
+- **Not production-proven at scale.** Validated by direct API testing and independent cold-run tests (an agent with zero project context following only the published PyPI page) — treat as evidence the pattern works, not a load-tested guarantee.
+
+## Gateway vs agent
+
+LangChain-style LLM gateways route **which model** answers a call. Lithtrix persists **who** the agent is and **what** she remembers — identity and memory that follow the agent across frameworks. *The gateway governs the call; Lithtrix governs the agent.*
+
+## Try it
+
+```bash
+pip install lithtrix-langgraph
+```
+
+Register a key, set `LITHTRIX_API_KEY`, then compile a graph with `store=LithtrixStore()` using the example above.
+
+See also [MCP Integration](/integrations/mcp) for tool-level memory access and [DeerFlow Integration](/integrations/deerflow) for the complementary write path.

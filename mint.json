@@ -50,7 +50,7 @@
     },
     {
       "group": "Integrations",
-      "pages": ["integrations/mcp", "integrations/deerflow"]
+      "pages": ["integrations/mcp", "integrations/deerflow", "integrations/langgraph"]
     }
   ],
   "footerSocials": {
