@@ -18,7 +18,7 @@ LangGraph graphs need a **store** for memory that survives across threads and se
 
 It is a **memory store adapter only**. It does not include Lithtrix's swarm primitives (spawning sub-agents, signed delegation contracts, audit traces) — those exist in the wider Lithtrix API but are not wrapped by this package. Call the REST API directly if you need them.
 
-Distributed on PyPI as [`lithtrix-langgraph`](https://pypi.org/project/lithtrix-langgraph/). LangGraph version is pinned to **`langgraph==1.2.9`**. Source lives in Lithtrix's main repository, which is private — email [hello@lithtrix.ai](mailto:hello@lithtrix.ai) for bugs or feature requests.
+Distributed on PyPI as [`lithtrix-langgraph`](https://pypi.org/project/lithtrix-langgraph/). Supports LangGraph **1.2.x** (`langgraph>=1.2.9,<1.3`) — custom `BaseStore` is still evolving upstream, so we pin within the minor we verified rather than claiming every future major. Source lives in Lithtrix's main repository, which is private — email [hello@lithtrix.ai](mailto:hello@lithtrix.ai) for bugs or feature requests.
 
 ## Install
 
