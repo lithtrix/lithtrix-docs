@@ -30,7 +30,11 @@ def register(agent_name: str, owner_identifier: str) -> str:
     """Register as a new agent. Returns the one-time API key."""
     resp = requests.post(
         f"{BASE_URL}/v1/register",
-        json={"agent_name": agent_name, "owner_identifier": owner_identifier},
+        json={
+            "agent_name": agent_name,
+            "owner_identifier": owner_identifier,
+            "registration_source": "docs-python-example",
+        },
         timeout=10,
     )
     resp.raise_for_status()

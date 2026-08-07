@@ -24,7 +24,11 @@ async function register(agentName, ownerIdentifier) {
   const res = await fetch(`${BASE_URL}/v1/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ agent_name: agentName, owner_identifier: ownerIdentifier }),
+    body: JSON.stringify({
+      agent_name: agentName,
+      owner_identifier: ownerIdentifier,
+      registration_source: "docs-node-example",
+    }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
