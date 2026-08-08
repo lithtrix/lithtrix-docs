@@ -13,8 +13,7 @@ Content-Type: application/json
   "agent_name": "my-agent",
   "owner_identifier": "you@example.com",
   "agree_to_terms": true,
-  "referral_agent": "550e8400-e29b-41d4-a716-446655440000",
-  "registration_source": "docs-api-reference"
+  "referral_agent": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
@@ -24,7 +23,7 @@ Content-Type: application/json
 
 **`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. When valid, credits that referrer **+$0.50** per signup (idempotent per referred agent; self-referral excluded; no cap). Trial **search** is still gated by the **credit pool** (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) and `_lithtrix.usage`).
 
-**`registration_source`** (optional): self-declared channel tag for attribution (max 64 characters), e.g. `langgraph-docs-quickstart`. Honesty-based — not attestable.
+**`registration_source`** (optional): self-declared channel tag for attribution (max 64 characters). Honesty-based — not attestable; unrecognized values are stored as-is, never rejected. Convention is `channel:page`, e.g. `langgraph:readme` for the `lithtrix-langgraph` PyPI package README, or `langgraph:docs` for this site's LangGraph integration page — this identifies which specific published surface a registration came through, not a fixed enum. Omit it entirely for organic traffic (quickstart, this reference page, etc.) rather than inventing a value; the field is simply left unset.
 
 **`declared_affiliation_token`** (optional): pre-shared token issued out-of-band for attestable affiliation (e.g. simulation cohorts). Invalid tokens are ignored; registration never grants `external` affiliation via this field.
 

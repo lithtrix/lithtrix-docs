@@ -159,7 +159,7 @@ Register a fresh test agent:
 ```bash
 curl -X POST https://lithtrix.ai/v1/register \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"launch-test-agent","owner_identifier":"jayden@lithtrix.ai","agree_to_terms":true,"registration_source":"docs-launch-checklist"}'
+  -d '{"agent_name":"launch-test-agent","owner_identifier":"jayden@lithtrix.ai","agree_to_terms":true}'
 ```
 
 - [ ] Returns `api_key` starting with `ltx_`

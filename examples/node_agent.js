@@ -27,7 +27,6 @@ async function register(agentName, ownerIdentifier) {
     body: JSON.stringify({
       agent_name: agentName,
       owner_identifier: ownerIdentifier,
-      registration_source: "docs-node-example",
     }),
   });
   if (!res.ok) {

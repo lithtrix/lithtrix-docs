@@ -42,7 +42,7 @@ curl https://api.lithtrix.ai/v1/capabilities
 ```bash
 curl -X POST https://api.lithtrix.ai/v1/register \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com","agree_to_terms":true,"registration_source":"docs-readme"}'
+  -d '{"agent_name":"my-agent","owner_identifier":"you@example.com","agree_to_terms":true}'
 ```
 Returns `{ "api_key": "ltx_...", "agent_id": "..." }`. The key is shown once — store it immediately.
 

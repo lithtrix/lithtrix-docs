@@ -62,7 +62,7 @@ curl -sS "https://lithtrix.ai/v1/capabilities"
 ```bash
 curl -sS -X POST "https://lithtrix.ai/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com","agree_to_terms":true,"registration_source":"clawhub-skill"}'
+  -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com","agree_to_terms":true,"registration_source":"clawhub:skill"}'
 ```
 
 Registration grants a **Spark trial pack** (~1,000 search calls, 180-day expiry) automatically — no card required.
