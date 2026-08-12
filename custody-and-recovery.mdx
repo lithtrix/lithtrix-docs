@@ -1,0 +1,128 @@
+---
+title: Custody and recovery
+description: >-
+  Arc 34 operator cold-run paths — retention tombstones, attested custody transfer,
+  owner-designated recovery key (Candidate A). Teaching error codes and prerequisites.
+---
+
+Arc 34 (**Custody & Continuity**) adds epoch-scoped reputation, attested custody transfer, and owner-designated recovery — without admin or email reset paths.
+
+## Prerequisites (all flows)
+
+| Requirement | Notes |
+|-------------|-------|
+| Active agent (`status=active`) | Tombstoned `registration_failed` agents cannot authenticate |
+| Root `ltx_*` API key | Scoped keys cannot transfer custody, enrol recovery, or revoke recovery |
+| Active passport | Revoked passport blocks enrol and custody complete |
+
+Public passport JSON includes `custody` (current epoch, custodian) and `recovery_enrolled: bool`.
+
+---
+
+## Retention (G34.4)
+
+Failed registration **tombstones** the agent row (`status=registration_failed`) and removes the passport row. Lithtrix does **not** delete reputation ledger rows or cascade-delete agents on register failure.
+
+Reputation events are **append-only** — dispute suppressions INSERT into `agent_reputation_event_suppressions`; they do not DELETE ledger rows.
+
+**Cold-run check:** Invalid `passport_public_key` at register → structured 4xx/503, not an unhandled 500 from FK violations.
+
+---
+
+## Custody transfer (G34.2)
+
+Transfer custody when the human owner changes. Reputation for the **current** epoch resets to zero; prior epoch history remains readable.
+
+### Steps
+
+1. **`POST /v1/me/custody/transfer/intent`** (root key)  
+   Body: `{ "to_owner_identifier": "new@example.com", "to_owner_type": "email" }`  
+   Returns: `challenge_id`, `challenge_nonce`, `expires_at`, `sign_payload`
+
+2. Sign **`canonical_custody_transfer_bytes_v1`** with the passport **private** key (Ed25519).
+
+3. **`POST /v1/me/custody/transfer/complete`** (root key)  
+   Body: challenge fields + `signature` + target owner
+
+4. Read history: **`GET /v1/agents/{agent_id}/reputation/history?epoch=1`**  
+   Prior epochs show custodian attribution; they do not count toward the current holder's score.
+
+### Teaching error codes
+
+| Code | Meaning |
+|------|---------|
+| `ROOT_KEY_REQUIRED` | Scoped key used |
+| `CUSTODY_NOOP` | Target owner equals current |
+| `CUSTODY_ATTESTATION_INVALID` | Bad or missing passport signature |
+| `CUSTODY_CHALLENGE_EXPIRED` | Challenge TTL elapsed |
+| `CUSTODY_EPOCH_MISMATCH` | Open epoch does not match agent owner |
+| `CUSTODY_TARGET_CONFLICT` | Name + owner already taken by another agent |
+| `PASSPORT_REVOKED` | No active passport |
+
+Discovery lists endpoints under `GET /v1/capabilities` → ai-agent block.
+
+---
+
+## Recovery key (G34.3 — Candidate A)
+
+Recovery restores a **lost root API key** using a separate Ed25519 **recovery keypair** you generated and stored offline. Lithtrix stores the recovery **public** key only.
+
+Recovery does **not** rotate the passport. After recovery, use **`POST /v1/me/passport/rotate`** with the new root key if you also need a new passport keypair.
+
+### Enrol (existing agents)
+
+1. **`POST /v1/auth/passport/challenge`** with your `agent_id`
+2. Sign **`canonical_recovery_enrol_bytes_v1`** (includes recovery public key PEM)
+3. **`POST /v1/me/recovery/enrol`** (root key)  
+   Body: `{ "recovery_public_key", "challenge_id", "signature" }`
+
+Optional at register: include `recovery_public_key` on **`POST /v1/register`**.
+
+**24-hour grace:** Recovery initiate/complete are blocked until `grace_until` elapses.
+
+### Lost root key
+
+1. **`POST /v1/recovery/initiate`** — public; body `{ "agent_id" }`
+2. Sign **`canonical_recovery_complete_bytes_v1`** with recovery **private** key
+3. **`POST /v1/recovery/complete`** — body `{ "agent_id", "challenge_id", "signature", "new_api_key"? }`  
+   Omit `new_api_key` to receive a server-generated `ltx_*` key once.
+
+### Rotate recovery key
+
+1. **`POST /v1/me/recovery/revoke`** (root key)
+2. Repeat enrol flow with a new recovery public key
+
+### Teaching error codes
+
+| Code | Meaning |
+|------|---------|
+| `RECOVERY_NOT_ENROLLED` | No active recovery key |
+| `RECOVERY_ALREADY_ENROLLED` | Revoke before re-enrol |
+| `RECOVERY_GRACE_PERIOD_ACTIVE` | Wait until grace_until |
+| `RECOVERY_SIGNATURE_REQUIRED` | Missing recovery signature |
+| `RECOVERY_ATTESTATION_INVALID` | Bad recovery signature |
+| `PASSPORT_SIGNATURE_INVALID` | Enrol attestation failed |
+| `RECOVERY_PUBLIC_KEY_INVALID` | Malformed PEM/base64 |
+| `RECOVERY_REVOKE_FAILED` | Revoke could not apply |
+
+---
+
+## Live verification
+
+Ops runbook: [`arc34-live-verify-runbook`](https://github.com/lithtrix/lithtrix/blob/main/lithtrix-cowork/engineering/2026-08-12-arc34-live-verify-runbook.md) (monorepo).
+
+```bash
+cd lithtrix-api
+.venv/bin/python scripts/arc34_live_verify.py --base-url https://api.lithtrix.ai
+```
+
+---
+
+## What Lithtrix does not offer
+
+- Admin-forced custody transfer or key reset
+- Email / magic-link recovery
+- Social / sponsorship quorum recovery
+- Platform-held encrypted key export as recovery proof
+
+See also: [Passports](/passports), [Reputation](/reputation), [Authentication](/authentication).
