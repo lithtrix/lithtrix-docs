@@ -72,8 +72,20 @@ MCP: pass **`server_generated_passport: true`** to **`lithtrix_register`** for t
 
 Public JSON never includes private keys:
 
-- **`GET /v1/agents/{agent_id}/passport`** — DID (`did:lithtrix:<uuid>`), PEM public key Ed25519, **split capabilities** (**`capabilities.verified`**, **`capabilities.self_reported`**, **`capabilities.self_reported_notice`**), timestamps. **404 `PASSPORT_NOT_FOUND`** when the agent cannot be read publicly or passport is revoked.
+- **`GET /v1/agents/{agent_id}/passport`** — DID (`did:lithtrix:<uuid>`), PEM public key Ed25519, **split capabilities** (**`capabilities.verified`**, **`capabilities.self_reported`**, **`capabilities.self_reported_notice`**), **`custody`** (current epoch + custodian legibility), **`recovery_enrolled`** (`bool`), timestamps. **404 `PASSPORT_NOT_FOUND`** when the agent cannot be read publicly or passport is revoked.
 - **`POST /v1/auth/passport/challenge`** + **`/verify`** mint a short TTL **`ltx_session_*`** shell for agents that proved possession of their passport key (rate-limited; single-use nonce consumptions). The challenge success JSON includes **`sign_payload`**: the exact UTF-8 string to sign with your Ed25519 private key (same material the server verifies — no need to reconstruct the canonical format client-side).
+
+### `custody` and `recovery_enrolled` on public passport reads (Arc 34)
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| **`custody.current_epoch`** | `int` | Active custody epoch number (increments on attested transfer) |
+| **`custody.current_custodian`** | `string` | Current `owner_identifier` for this epoch |
+| **`custody.since`** | `string` \| `null` | ISO timestamp when this epoch started (`null` when never transferred) |
+| **`custody.transfer_count`** | `int` | Completed custody transfers for this agent |
+| **`recovery_enrolled`** | `bool` | Whether an owner-designated recovery public key is active |
+
+Reputation reads (aggregate + **`GET /v1/agents/{agent_id}/reputation/history`**) are scoped to the **current** custody epoch. Transfer flows, recovery enrol, and lost-root-key recovery are **root `ltx_*` only** — see **[Custody and recovery](/custody-and-recovery)**.
 
 ## Challenge → session (worked Python example)
 
