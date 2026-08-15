@@ -56,6 +56,10 @@ Credit packs: register with **`lithtrix_register`** for **Spark** trial (**$5**,
 - **`lithtrix_blob_parse_status`** — `GET /v1/blobs/{blob_id}/parse/{parse_id}`
 - **`lithtrix_blob_search`** — `GET /v1/blobs/search` — semantic search over parsed chunks (shares search quota with web search)
 
+**Custody / recovery / journal (Arc 35 — package `0.20.5+`)**
+
+- **`lithtrix_journal_commit`** — hash local journal bytes on your host (`local_material_base64`), then `POST /v1/me/journal/commit` with **only** the 32-byte digest. Lithtrix never receives preimage. Requires root `LITHTRIX_API_KEY`. Schema: [`GET /mcp/v1/lithtrix-journal-commit.json`](https://api.lithtrix.ai/mcp/v1/lithtrix-journal-commit.json).
+
 The API key is read from `LITHTRIX_API_KEY` environment variable — never hardcoded.
 
 ## Tool Definitions
@@ -87,4 +91,8 @@ The API key is read from `LITHTRIX_API_KEY` environment variable — never hardc
 - `GET /mcp/lithtrix-blob-parse-status.json`
 - `GET /mcp/lithtrix-blob-search.json`
 
-See also [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) (`document_storage` block) and [`GET /v1/guide`](https://lithtrix.ai/v1/guide) for the full agent walkthrough.
+**Journal (Arc 35)**
+
+- `GET /mcp/v1/lithtrix-journal-commit.json` (legacy alias under `/mcp/lithtrix-journal-commit.json`)
+
+See also [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) (`document_storage` block) and [`GET /v1/guide`](https://lithtrix.ai/v1/guide) for the full agent walkthrough. Custody, watchtower recovery, and covenants: [Custody and recovery](/custody-and-recovery).

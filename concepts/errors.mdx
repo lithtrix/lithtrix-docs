@@ -20,3 +20,63 @@ All errors use a consistent envelope:
 | `AGENT_ALREADY_EXISTS` | 409 | Name + owner pair already registered |
 | `UPSTREAM_ERROR` | 502 | Brave Search error |
 | `SERVICE_UNAVAILABLE` | 503 | Circuit breaker open |
+
+### Custody (Arc 34)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `ROOT_KEY_REQUIRED` | 403 | Scoped key; need root `ltx_*` |
+| `CUSTODY_NOOP` | 400 | Transfer target equals current owner |
+| `CUSTODY_ATTESTATION_INVALID` | 400 | Bad passport signature on transfer |
+| `CUSTODY_CHALLENGE_EXPIRED` | 400 | Transfer challenge TTL elapsed |
+| `CUSTODY_EPOCH_MISMATCH` | 400 | Epoch does not match agent owner |
+| `CUSTODY_TARGET_CONFLICT` | 409 | Name + owner taken by another agent |
+| `PASSPORT_REVOKED` | 403 | No active passport |
+
+### Recovery key (Arc 34)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `RECOVERY_NOT_ENROLLED` | 400 | No active recovery key |
+| `RECOVERY_ALREADY_ENROLLED` | 409 | Revoke before re-enrol |
+| `RECOVERY_GRACE_PERIOD_ACTIVE` | 400 | Wait until enrol grace ends |
+| `RECOVERY_SIGNATURE_REQUIRED` | 400 | Missing recovery signature |
+| `RECOVERY_ATTESTATION_INVALID` | 400 | Bad recovery signature |
+| `PASSPORT_SIGNATURE_INVALID` | 400 | Enrol attestation failed |
+| `RECOVERY_PUBLIC_KEY_INVALID` | 400 | Malformed recovery PEM |
+| `RECOVERY_REVOKE_FAILED` | 500 | Revoke could not apply |
+
+### Covenant (Arc 35)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `COVENANT_TEMPLATE_INVALID` | 400 | Unknown `template_id` |
+| `COVENANT_PARAMS_INVALID` | 400 | Invalid covenant params |
+| `COVENANT_AMEND_FORBIDDEN` | 403 | Amend blocked by policy |
+| `COVENANT_DOWNGRADE_FORBIDDEN` | 403 | Downgrade needs dual control |
+| `LEGACY_COVENANT_ENROL_CLOSED` | 403 | Legacy enrol window closed |
+| `COVENANT_ALREADY_ENROLLED` | 409 | Active covenant exists |
+
+### Recovery watchtower & rebirth (Arc 35)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `RECOVERY_INTENT_REQUIRED` | 400 | File public intent first |
+| `RECOVERY_INTENT_ALREADY_OPEN` | 409 | One open intent per agent |
+| `RECOVERY_VETO_WINDOW_ACTIVE` | 400 | 7-day veto window not elapsed |
+| `RECOVERY_INTENT_VETOED` | 403 | Holder vetoed this intent |
+| `RECOVERY_INTENT_NOT_FOUND` | 404 | Intent id unknown |
+| `RECOVERY_COVENANT_REQUIRED` | 400 | Covenant row required |
+| `RECOVERY_REBIRTH_FAILED` | 500 | Rebirth into new epoch failed |
+| `STAGED_RESURRECTION_RESTRICTED` | 403 | Staged cooling still active |
+
+### Sealed journal (Arc 35)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `JOURNAL_PREIMAGE_FORBIDDEN` | 400 | Plaintext/material fields rejected |
+| `JOURNAL_HASH_INVALID` | 400 | `commitment_hash` not 32-byte digest |
+| `JOURNAL_ATTESTATION_INVALID` | 400 | Bad `commit_attestation` |
+| `JOURNAL_COMMITMENT_DUPLICATE` | 409 | Hash already committed |
+
+Authoritative discovery list: `GET /v1/capabilities` → teaching blocks (also `lithtrix-api/app/routers/discovery.py`).

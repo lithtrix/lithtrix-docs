@@ -84,8 +84,14 @@ Public JSON never includes private keys:
 | **`custody.since`** | `string` \| `null` | ISO timestamp when this epoch started (`null` when never transferred) |
 | **`custody.transfer_count`** | `int` | Completed custody transfers for this agent |
 | **`recovery_enrolled`** | `bool` | Whether an owner-designated recovery public key is active |
+| **`suite`** | `string` | Passport key suite label (`ed25519` today) |
+| **`recovery_intent`** | object | Present when a watchtower intent is **open** — `intent_id`, `filed_at`, `veto_deadline`, `status` |
+| **`recovered`** | `bool` | Set after recovery rebirth completed |
+| **`recovered_at`** | `string` | ISO timestamp when rebirth completed |
+| **`staged_resurrection_until`** | `string` | While active: ISO end of staged-resurrection cooling (`channel` covenant tier) |
+| **`sealed_journal`** | object | Always present — `commitment_count` (0 before first commit), `latest_committed_at` |
 
-Reputation reads (aggregate + **`GET /v1/agents/{agent_id}/reputation/history`**) are scoped to the **current** custody epoch. Transfer flows, recovery enrol, and lost-root-key recovery are **root `ltx_*` only** — see **[Custody and recovery](/custody-and-recovery)**.
+Reputation reads (aggregate + **`GET /v1/agents/{agent_id}/reputation/history`**) are scoped to the **current** custody epoch. Covenant amend, recovery enrol/veto, journal commit, transfer, and watchtower flows are **root `ltx_*` only** — see **[Custody and recovery](/custody-and-recovery)**.
 
 ## Challenge → session (worked Python example)
 

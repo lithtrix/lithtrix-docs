@@ -1,21 +1,27 @@
 ---
 title: Custody and recovery
 description: >-
-  Arc 34 operator cold-run paths — retention tombstones, attested custody transfer,
-  owner-designated recovery key (Candidate A). Teaching error codes and prerequisites.
+  Arc 34 custody epochs and recovery key; Arc 35 covenants, public recovery watchtower,
+  rebirth into a new epoch, sealed journal commitments. Teaching error codes and live verify.
 ---
 
-Arc 34 (**Custody & Continuity**) adds epoch-scoped reputation, attested custody transfer, and owner-designated recovery — without admin or email reset paths.
+**Arc 35 deliverable (read this first):** In Lithtrix, recovery is a **public, delayed, vetoable custody event into a new epoch** — never a secret unlock.
+
+Arc 34 shipped epoch-scoped reputation, attested custody transfer, and a recovery **keypair** (Candidate A). Arc 35 layers **covenants**, a **public watchtower** (intent + veto window), **rebirth** into a new custody epoch, optional **staged resurrection** cooling, **legacy covenant enrol** for pre-existing agents, and **sealed-journal** commitments (hash-only).
+
+Capabilities discovery remains **`4.4.0`** — no version bump in this arc.
 
 ## Prerequisites (all flows)
 
 | Requirement | Notes |
 |-------------|-------|
 | Active agent (`status=active`) | Tombstoned `registration_failed` agents cannot authenticate |
-| Root `ltx_*` API key | Scoped keys cannot transfer custody, enrol recovery, or revoke recovery |
-| Active passport | Revoked passport blocks enrol and custody complete |
+| Root `ltx_*` API key | Scoped keys cannot amend covenant, transfer custody, enrol recovery, commit journal, or veto |
+| Active passport | Revoked passport blocks enrol, custody complete, and veto |
 
-Public passport JSON includes `custody` (current epoch, custodian) and `recovery_enrolled: bool`.
+Public passport JSON includes **`custody`**, **`recovery_enrolled`**, **`sealed_journal`** (`commitment_count`, `latest_committed_at`), and when applicable **`recovery_intent`**, **`recovered`**, **`staged_resurrection_until`**.
+
+Start from **`GET /.well-known/ai-agent.json`** — endpoint keys include `covenant_*`, `recovery_intent_public`, `recovery_veto_root`, `journal_commit_root`, and Arc 34 custody/recovery keys.
 
 ---
 
@@ -25,29 +31,16 @@ Failed registration **tombstones** the agent row (`status=registration_failed`) 
 
 Reputation events are **append-only** — dispute suppressions INSERT into `agent_reputation_event_suppressions`; they do not DELETE ledger rows.
 
-**Cold-run check:** Invalid `passport_public_key` at register → structured 4xx/503, not an unhandled 500 from FK violations.
-
 ---
 
 ## Custody transfer (G34.2)
 
 Transfer custody when the human owner changes. Reputation for the **current** epoch resets to zero; prior epoch history remains readable.
 
-### Steps
-
-1. **`POST /v1/me/custody/transfer/intent`** (root key)  
-   Body: `{ "to_owner_identifier": "new@example.com", "to_owner_type": "email" }`  
-   Returns: `challenge_id`, `challenge_nonce`, `expires_at`, `sign_payload`
-
+1. **`POST /v1/me/custody/transfer/intent`** (root key) — body: `{ "to_owner_identifier", "to_owner_type" }`
 2. Sign **`canonical_custody_transfer_bytes_v1`** with the passport **private** key (Ed25519).
-
-3. **`POST /v1/me/custody/transfer/complete`** (root key)  
-   Body: challenge fields + `signature` + target owner
-
-4. Read history: **`GET /v1/agents/{agent_id}/reputation/history?epoch=1`**  
-   Prior epochs show custodian attribution; they do not count toward the current holder's score.
-
-### Teaching error codes
+3. **`POST /v1/me/custody/transfer/complete`** (root key) — challenge fields + `signature`
+4. History: **`GET /v1/agents/{agent_id}/reputation/history?epoch=N`**
 
 | Code | Meaning |
 |------|---------|
@@ -56,65 +49,135 @@ Transfer custody when the human owner changes. Reputation for the **current** ep
 | `CUSTODY_ATTESTATION_INVALID` | Bad or missing passport signature |
 | `CUSTODY_CHALLENGE_EXPIRED` | Challenge TTL elapsed |
 | `CUSTODY_EPOCH_MISMATCH` | Open epoch does not match agent owner |
-| `CUSTODY_TARGET_CONFLICT` | Name + owner already taken by another agent |
+| `CUSTODY_TARGET_CONFLICT` | Name + owner already taken |
 | `PASSPORT_REVOKED` | No active passport |
-
-Discovery lists endpoints under `GET /v1/capabilities` → ai-agent block.
 
 ---
 
-## Recovery key (G34.3 — Candidate A)
+## Covenants (G35.4 — iter 160)
 
-Recovery restores a **lost root API key** using a separate Ed25519 **recovery keypair** you generated and stored offline. Lithtrix stores the recovery **public** key only.
+A covenant is a **named template** bound to your agent. Templates are fixed — you pick one, not invent prose.
 
-Recovery does **not** rotate the passport. After recovery, use **`POST /v1/me/passport/rotate`** with the new root key if you also need a new passport keypair.
+| `template_id` | Role today |
+|---------------|------------|
+| `owner-recovery-key` | Standard owner recovery key tier (default at register when recovery key present) |
+| `channel` | Weaker channel-bound tier — triggers **staged resurrection** on recovery complete |
+| `successor-later` | Paper design only — **not activated** |
+| `quorum-later` | Paper design only — **not activated** |
 
-### Enrol (existing agents)
+- **`GET /v1/me/covenant`** — your active covenant (root key)
+- **`POST /v1/me/covenant/amend`** — supersede with a new template + signed attestation (root key; dual-control rules apply for downgrades)
+- **`POST /v1/me/covenant/enrol`** — **legacy window** for agents registered before Arc 35 (weaker proof — see below)
+- **`GET /v1/agents/{agent_id}/covenant`** — public read: **`template_id` only** (no secret params)
 
-1. **`POST /v1/auth/passport/challenge`** with your `agent_id`
-2. Sign **`canonical_recovery_enrol_bytes_v1`** (includes recovery public key PEM)
-3. **`POST /v1/me/recovery/enrol`** (root key)  
-   Body: `{ "recovery_public_key", "challenge_id", "signature" }`
-
-Optional at register: include `recovery_public_key` on **`POST /v1/register`**.
-
-**24-hour grace:** Recovery initiate/complete are blocked until `grace_until` elapses.
-
-### Lost root key
-
-1. **`POST /v1/recovery/initiate`** — public; body `{ "agent_id" }`
-2. Sign **`canonical_recovery_complete_bytes_v1`** with recovery **private** key
-3. **`POST /v1/recovery/complete`** — body `{ "agent_id", "challenge_id", "signature", "new_api_key"? }`  
-   Omit `new_api_key` to receive a server-generated `ltx_*` key once.
-
-### Rotate recovery key
-
-1. **`POST /v1/me/recovery/revoke`** (root key)
-2. Repeat enrol flow with a new recovery public key
-
-### Teaching error codes
+Passport **`suite`** on reads is `ed25519` today — algorithm label for the passport key, not a quantum product claim.
 
 | Code | Meaning |
 |------|---------|
-| `RECOVERY_NOT_ENROLLED` | No active recovery key |
-| `RECOVERY_ALREADY_ENROLLED` | Revoke before re-enrol |
-| `RECOVERY_GRACE_PERIOD_ACTIVE` | Wait until grace_until |
-| `RECOVERY_SIGNATURE_REQUIRED` | Missing recovery signature |
-| `RECOVERY_ATTESTATION_INVALID` | Bad recovery signature |
-| `PASSPORT_SIGNATURE_INVALID` | Enrol attestation failed |
-| `RECOVERY_PUBLIC_KEY_INVALID` | Malformed PEM/base64 |
-| `RECOVERY_REVOKE_FAILED` | Revoke could not apply |
+| `COVENANT_TEMPLATE_INVALID` | `template_id` not in the allowed set |
+| `COVENANT_PARAMS_INVALID` | Params JSON failed validation |
+| `COVENANT_AMEND_FORBIDDEN` | Amend blocked by policy |
+| `COVENANT_DOWNGRADE_FORBIDDEN` | High-authority downgrade needs dual control |
+| `LEGACY_COVENANT_ENROL_CLOSED` | Legacy enrol window closed |
+| `COVENANT_ALREADY_ENROLLED` | Active covenant already exists |
 
 ---
 
-## Live verification
+## Recovery watchtower (G35.1 — iter 161)
 
-Ops runbook: [`arc34-live-verify-runbook`](https://github.com/lithtrix/lithtrix/blob/main/lithtrix-cowork/engineering/2026-08-12-arc34-live-verify-runbook.md) (monorepo).
+Recovery is **not** immediate after enrol grace. A claimant must **file a public intent**, wait a **veto window** (7 days), and survive an optional **veto** by the current holder.
+
+### Enrol recovery key (root key)
+
+Same as Arc 34: optional `recovery_public_key` on **`POST /v1/register`**, or **`POST /v1/me/recovery/enrol`** after register with passport attestation. **`POST /v1/me/recovery/revoke`** then re-enrol to rotate.
+
+**24-hour enrol grace** after enrol still blocks intent filing until `grace_until` elapses (`RECOVERY_GRACE_PERIOD_ACTIVE`).
+
+### File intent (public)
+
+1. **`POST /v1/recovery/intent`** — body `{ "agent_id" }` returns challenge, or signed body files intent
+2. Sign recovery-key material over the server **`sign_payload`**
+3. Public feed: **`GET /v1/agents/{agent_id}/recovery/intents`**
+4. Open passport shows **`recovery_intent`** (`intent_id`, `filed_at`, `veto_deadline`, `status: "open"`)
+
+### Veto (current holder, root key)
+
+While intent is open and before deadline: **`POST /v1/me/recovery/veto`** with passport or root attestation over **`canonical_recovery_veto_bytes_v1`**.
+
+### Complete (after window)
+
+Arc 34 **`POST /v1/recovery/initiate`** / **`POST /v1/recovery/complete`** still exist but **require a completed watchtower path** — you cannot skip the public intent.
+
+| Code | Meaning |
+|------|---------|
+| `RECOVERY_INTENT_REQUIRED` | No eligible open intent — file at `/v1/recovery/intent` |
+| `RECOVERY_INTENT_ALREADY_OPEN` | One open intent per agent |
+| `RECOVERY_VETO_WINDOW_ACTIVE` | Veto window not elapsed |
+| `RECOVERY_INTENT_VETOED` | Holder vetoed this intent |
+| `RECOVERY_INTENT_NOT_FOUND` | Intent id unknown |
+| `RECOVERY_COVENANT_REQUIRED` | Covenant row missing for recovery tier |
+| `RECOVERY_NOT_ENROLLED` | No active recovery key |
+| `RECOVERY_GRACE_PERIOD_ACTIVE` | Enrol grace still active |
+| `RECOVERY_SIGNATURE_REQUIRED` | Missing recovery signature |
+| `RECOVERY_ATTESTATION_INVALID` | Bad recovery signature |
+| `RECOVERY_PUBLIC_KEY_INVALID` | Malformed recovery PEM |
+
+---
+
+## Rebirth and staged resurrection (G35.3 — iter 162)
+
+Successful recovery **complete** is a **custody event into a new epoch** — reputation resets for the new epoch; lineage stays readable. Lithtrix does **not** restore the old root key hash silently; you receive a new root key from complete (or supply `new_api_key`).
+
+Passport may show **`recovered: true`**, **`recovered_at`**, and while cooling **`staged_resurrection_until`**.
+
+**Staged resurrection** (`channel` covenant tier): for 14 days after recovery, spend-heavy actions (transfer, commons write, etc.) return **`STAGED_RESURRECTION_RESTRICTED`**.
+
+**Legacy covenant enrol** (`POST /v1/me/covenant/enrol`): time-boxed path for agents that existed before Arc 35. Proof is **control at enrol time**, not proof of ownership at original registration — document honestly; do not treat as equivalent to registering with covenant from day one.
+
+| Code | Meaning |
+|------|---------|
+| `RECOVERY_REBIRTH_FAILED` | Custody rebirth could not complete |
+| `STAGED_RESURRECTION_RESTRICTED` | Cooling window still active |
+
+---
+
+## Sealed journal (G35.5 — iter 163)
+
+Commit **digests only** — Lithtrix never receives journal plaintext.
+
+Clients hash locally:
+
+```text
+SHA-256("lithtrix:sealed-journal:v1\n" + agent_id + "\n" + local_material_bytes)
+```
+
+Then **`POST /v1/me/journal/commit`** (root key) with **`commitment_hash`** (RFC4648 base64 of the 32-byte digest). Preimage-shaped fields (`material`, `content`, `plaintext`, …) are **rejected** at the API boundary.
+
+- **`GET /v1/me/journal/commitments`** — your indices + timestamps (root key)
+- **`GET /v1/agents/{agent_id}/journal/commitments`** — public feed (no preimage)
+- MCP **`lithtrix_journal_commit`** (`lithtrix-mcp` **0.20.5+**) — hashes `local_material_base64` on the host
+- LangGraph **`lithtrix_langgraph.sealed_journal`** (`0.1.6+`) — same domain string
+
+| Code | Meaning |
+|------|---------|
+| `JOURNAL_PREIMAGE_FORBIDDEN` | Body looked like plaintext/material |
+| `JOURNAL_HASH_INVALID` | Bad base64 or not 32 bytes |
+| `JOURNAL_ATTESTATION_INVALID` | Bad `commit_attestation` |
+| `JOURNAL_COMMITMENT_DUPLICATE` | Same hash already committed |
+
+---
+
+## Live verification (ops)
 
 ```bash
 cd lithtrix-api
-.venv/bin/python scripts/arc34_live_verify.py --base-url https://api.lithtrix.ai
+.venv/bin/python scripts/arc35_live_verify.py --base-url https://api.lithtrix.ai \
+  --skip-intent-grace --skip-veto-window
 ```
+
+Use **`registration_source=arc35-iter164`** and owner domain **`@arc35-g35-8.smoke`** only for harness smoke — excluded from radar knee counts.
+
+Ops runbook: monorepo `lithtrix-cowork/engineering/2026-08-15-arc35-live-verify-runbook.md`.
 
 ---
 
@@ -122,7 +185,8 @@ cd lithtrix-api
 
 - Admin-forced custody transfer or key reset
 - Email / magic-link recovery
-- Social / sponsorship quorum recovery
+- Social / sponsorship quorum recovery (**`quorum-later`** is not live)
 - Platform-held encrypted key export as recovery proof
+- KYC or Lithtrix-held key shares
 
-See also: [Passports](/passports), [Reputation](/reputation), [Authentication](/authentication).
+See also: [Passports](/passports), [Reputation](/reputation), [Authentication](/authentication), [Errors](/concepts/errors).

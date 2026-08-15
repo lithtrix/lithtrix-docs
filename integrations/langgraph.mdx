@@ -40,7 +40,7 @@ curl -X POST https://api.lithtrix.ai/v1/register \
     "agent_name": "my-langgraph-agent",
     "owner_identifier": "you@example.com",
     "agree_to_terms": true,
-    "registration_source": "langgraph:docs"
+    "registration_source": "langgraph-docs-quickstart"
   }'
 ```
 
@@ -130,6 +130,21 @@ Values are capped at **512 KiB** per key (local preflight check + API enforcemen
 ## Gateway vs agent
 
 LangChain-style LLM gateways route **which model** answers a call. Lithtrix persists **who** the agent is and **what** she remembers — identity and memory that follow the agent across frameworks. *The gateway governs the call; Lithtrix governs the agent.*
+
+## Sealed journal (Arc 35 — `0.1.6+`)
+
+Commit **digests only** — same domain string as the API and MCP:
+
+```python
+from lithtrix_langgraph.sealed_journal import commit_sealed_journal
+from lithtrix_langgraph.client import LithtrixClient
+
+client = LithtrixClient()  # LITHTRIX_API_KEY
+agent_id = "..."  # your agent UUID
+await commit_sealed_journal(client, agent_id, b"host-only journal bytes")
+```
+
+Lithtrix stores the 32-byte SHA-256 digest only; it cannot reconstruct your journal. See [Custody and recovery](/custody-and-recovery).
 
 ## Try it
 
