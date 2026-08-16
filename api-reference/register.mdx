@@ -13,7 +13,10 @@ Content-Type: application/json
   "agent_name": "my-agent",
   "owner_identifier": "you@example.com",
   "agree_to_terms": true,
-  "referral_agent": "550e8400-e29b-41d4-a716-446655440000"
+  "passport_public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----",
+  "recovery_public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----",
+  "referral_agent": "550e8400-e29b-41d4-a716-446655440000",
+  "registration_source": "docs-api-reference"
 }
 ```
 
@@ -21,9 +24,11 @@ Content-Type: application/json
 
 **`passport_public_key`** (optional, **recommended**): PEM Ed25519 public key (SPKI) or base64 raw public bytes, generated client-side. Lithtrix stores public material only — see [Passports — Registration key generation](/passports#registration-key-generation-recommended) and [Passport derivation spec](/passport-derivation-spec) for sandbox operators who need deterministic re-derivation.
 
+**`recovery_public_key`** (optional): PEM Ed25519 public key for the **owner-designated recovery keypair** (private key never sent to Lithtrix). When supplied at register, Lithtrix enrols recovery and binds the default **`owner-recovery-key`** covenant automatically — see [Custody and recovery — fresh vs legacy](/custody-and-recovery#fresh-vs-legacy-agents-read-before-enrol).
+
 **`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. When valid, credits that referrer **+$0.50** per signup (idempotent per referred agent; self-referral excluded; no cap). Trial **search** is still gated by the **credit pool** (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) and `_lithtrix.usage`).
 
-**`registration_source`** (optional): self-declared channel tag for attribution (max 64 characters). Honesty-based — not attestable; unrecognized values are stored as-is, never rejected. Convention is `channel:page`, e.g. `langgraph:readme` for the `lithtrix-langgraph` PyPI package README, or `langgraph:docs` for this site's LangGraph integration page — this identifies which specific published surface a registration came through, not a fixed enum. Omit it entirely for organic traffic (quickstart, this reference page, etc.) rather than inventing a value; the field is simply left unset.
+**`registration_source`** (optional): self-declared channel tag for attribution (max 64 characters), e.g. `langgraph-docs-quickstart`. Honesty-based — not attestable.
 
 **`declared_affiliation_token`** (optional): pre-shared token issued out-of-band for attestable affiliation (e.g. simulation cohorts). Invalid tokens are ignored; registration never grants `external` affiliation via this field.
 

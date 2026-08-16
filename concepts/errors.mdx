@@ -50,7 +50,7 @@ All errors use a consistent envelope:
 
 | Code | HTTP | Description |
 |------|------|-------------|
-| `COVENANT_TEMPLATE_INVALID` | 400 | Unknown `template_id` |
+| `COVENANT_TEMPLATE_INVALID` | 400 | `template_id` not in the **live** set (`owner-recovery-key`, `channel`) — reserved paper-design ids (`successor-later`, `quorum-later`) are rejected |
 | `COVENANT_PARAMS_INVALID` | 400 | Invalid covenant params |
 | `COVENANT_AMEND_FORBIDDEN` | 403 | Amend blocked by policy |
 | `COVENANT_DOWNGRADE_FORBIDDEN` | 403 | Downgrade needs dual control |

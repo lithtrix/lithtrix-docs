@@ -54,6 +54,14 @@ Transfer custody when the human owner changes. Reputation for the **current** ep
 
 ---
 
+## Fresh vs legacy agents (read before enrol)
+
+**New agents (recommended):** supply optional **`recovery_public_key`** on **`POST /v1/register`**. Lithtrix enrols the recovery key and binds the default **`owner-recovery-key`** covenant **automatically** at registration — no separate `/enrol` call.
+
+**Legacy agents only:** agents that **already existed before Arc 35** and have **no covenant row** may use **`POST /v1/me/covenant/enrol`** inside the time-boxed legacy window (until **2026-11-15 UTC** per capabilities). That path proves **current control at enrol time**, not ownership at original registration — deliberately weaker than register-time enrolment.
+
+---
+
 ## Covenants (G35.4 — iter 160)
 
 A covenant is a **named template** bound to your agent. Templates are fixed — you pick one, not invent prose.
@@ -62,19 +70,124 @@ A covenant is a **named template** bound to your agent. Templates are fixed — 
 |---------------|------------|
 | `owner-recovery-key` | Standard owner recovery key tier (default at register when recovery key present) |
 | `channel` | Weaker channel-bound tier — triggers **staged resurrection** on recovery complete |
-| `successor-later` | Paper design only — **not activated** |
-| `quorum-later` | Paper design only — **not activated** |
+| `successor-later` | Reserved paper design — **not enrolable** (returns `COVENANT_TEMPLATE_INVALID`) |
+| `quorum-later` | Reserved paper design — **not enrolable** (returns `COVENANT_TEMPLATE_INVALID`) |
 
 - **`GET /v1/me/covenant`** — your active covenant (root key)
 - **`POST /v1/me/covenant/amend`** — supersede with a new template + signed attestation (root key; dual-control rules apply for downgrades)
-- **`POST /v1/me/covenant/enrol`** — **legacy window** for agents registered before Arc 35 (weaker proof — see below)
+- **`POST /v1/me/covenant/enrol`** — **legacy only** (see above) — weaker proof than register-time enrolment
 - **`GET /v1/agents/{agent_id}/covenant`** — public read: **`template_id` only** (no secret params)
 
 Passport **`suite`** on reads is `ed25519` today — algorithm label for the passport key, not a quantum product claim.
 
+### Legacy covenant enrol — weaker proof
+
+Legacy enrolment attests that whoever holds the **root `ltx_*` key and passport private key today** can bind a covenant. It does **not** prove the same party controlled the agent at registration, does not re-validate the original owner relationship, and is **time-boxed**. Prefer **`recovery_public_key` on register** for new agents.
+
+### Signed attestations (covenant + recovery enrol)
+
+Endpoints that require a **passport signature** share the same challenge flow:
+
+1. **`POST /v1/auth/passport/challenge`** with `{ "agent_id": "<uuid>" }` (root `ltx_*` key not required for challenge mint).
+2. Build the **canonical UTF-8 byte string** for the operation (formats below).
+3. Sign with your **passport Ed25519 private key**; submit **RFC4648 base64** of the **raw** 64-byte signature (not DER).
+4. POST to the enrol/amend endpoint with `challenge_id` + signature fields.
+
+#### `POST /v1/me/recovery/enrol` — request body
+
+```json
+{
+  "recovery_public_key": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----",
+  "challenge_id": "550e8400-e29b-41d4-a716-446655440000",
+  "signature": "<base64 raw Ed25519 signature>"
+}
+```
+
+**Canonical bytes (`lithtrix.recovery.enrol.v1`):**
+
+```text
+lithtrix.recovery.enrol.v1
+<challenge_id>
+<challenge_nonce>
+<recovery_public_key_pem>
+<issued_at RFC3339 Z>
+<expires_at RFC3339 Z>
+```
+
+**Worked example** (illustrative challenge — live calls must use a fresh challenge from step 1):
+
+```text
+lithtrix.recovery.enrol.v1
+550e8400-e29b-41d4-a716-446655440000
+a1b2c3d4-e5f6-7890-abcd-ef1234567890
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAMgxDm28yVve0qmYbgPkBmE3LklWJiox1kLWXMZSXmZ8=
+-----END PUBLIC KEY-----
+2026-08-16T00:00:00Z
+2026-08-16T01:00:00Z
+```
+
+Example signature (base64 raw): `HyOiAYXRHDdzvzhA23aOQ7m8NskhjOuMtW3t9IppxhLFeTdj+FRp86NPli+ZM1LLvp0iQqXTVavjJLJLlEgNCw==`
+
+#### `POST /v1/me/covenant/enrol` — request body
+
+```json
+{
+  "template_id": "owner-recovery-key",
+  "params": { "recovery_key_id": "660e8400-e29b-41d4-a716-446655440001" },
+  "challenge_id": "550e8400-e29b-41d4-a716-446655440000",
+  "passport_signature": "<base64 raw Ed25519 signature>"
+}
+```
+
+Requires an **active recovery key** already enrolled (`recovery_key_id` from your recovery row). Legacy enrol accepts **`owner-recovery-key` only**.
+
+**Canonical bytes (`lithtrix.covenant.amend.v1`)** — same scheme as amend:
+
+```text
+lithtrix.covenant.amend.v1
+<challenge_id>
+<challenge_nonce>
+<template_id>
+<params_json_canonical>
+<issued_at RFC3339 Z>
+<expires_at RFC3339 Z>
+```
+
+`params_json_canonical` = `json.dumps(params, sort_keys=True, separators=(",", ":"))`.
+
+**Worked example:**
+
+```text
+lithtrix.covenant.amend.v1
+550e8400-e29b-41d4-a716-446655440000
+a1b2c3d4-e5f6-7890-abcd-ef1234567890
+owner-recovery-key
+{"recovery_key_id":"660e8400-e29b-41d4-a716-446655440001"}
+2026-08-16T00:00:00Z
+2026-08-16T01:00:00Z
+```
+
+Example `passport_signature` (base64 raw): `d5+TAQhvDv79kO7maDOryExwIx+KXxIjWGr0n9G0EybSsQJiXbEb3xD/qQ/D5XnPXL4Fkhb9dS9sBSfQvS7qCw==`
+
+```python
+import base64
+import json
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+def sign_canonical(priv_pem: bytes, canonical_utf8: str) -> str:
+    priv = serialization.load_pem_private_key(priv_pem, password=None)
+    assert isinstance(priv, Ed25519PrivateKey)
+    return base64.b64encode(priv.sign(canonical_utf8.encode("utf-8"))).decode("ascii")
+```
+
+See also [Passports — challenge auth](/passports#challenge-auth) and `system/api_docs_standards.md` Rule 1 (D172-5).
+
 | Code | Meaning |
 |------|---------|
-| `COVENANT_TEMPLATE_INVALID` | `template_id` not in the allowed set |
+| `COVENANT_TEMPLATE_INVALID` | `template_id` not in the **live** set (`owner-recovery-key`, `channel`) — reserved ids (`successor-later`, `quorum-later`) are rejected |
 | `COVENANT_PARAMS_INVALID` | Params JSON failed validation |
 | `COVENANT_AMEND_FORBIDDEN` | Amend blocked by policy |
 | `COVENANT_DOWNGRADE_FORBIDDEN` | High-authority downgrade needs dual control |
@@ -131,8 +244,6 @@ Successful recovery **complete** is a **custody event into a new epoch** — rep
 Passport may show **`recovered: true`**, **`recovered_at`**, and while cooling **`staged_resurrection_until`**.
 
 **Staged resurrection** (`channel` covenant tier): for 14 days after recovery, spend-heavy actions (transfer, commons write, etc.) return **`STAGED_RESURRECTION_RESTRICTED`**.
-
-**Legacy covenant enrol** (`POST /v1/me/covenant/enrol`): time-boxed path for agents that existed before Arc 35. Proof is **control at enrol time**, not proof of ownership at original registration — document honestly; do not treat as equivalent to registering with covenant from day one.
 
 | Code | Meaning |
 |------|---------|
