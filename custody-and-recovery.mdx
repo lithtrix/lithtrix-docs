@@ -129,18 +129,27 @@ MCowBQYDK2VwAyEAMgxDm28yVve0qmYbgPkBmE3LklWJiox1kLWXMZSXmZ8=
 
 Example signature (base64 raw): `HyOiAYXRHDdzvzhA23aOQ7m8NskhjOuMtW3t9IppxhLFeTdj+FRp86NPli+ZM1LLvp0iQqXTVavjJLJLlEgNCw==`
 
+On success, the response includes **`recovery_key_id`** (for optional use in legacy covenant enrol) and **`grace_until`**.
+
 #### `POST /v1/me/covenant/enrol` — request body
+
+For **legacy agents**, enrol a recovery key first (`POST /v1/me/recovery/enrol`), then bind the covenant. In `params`, supply **exactly one** of:
+
+- **`recovery_public_key_pem`** — **recommended for legacy enrol** — the same PEM you used in recovery enrol (you already have this; no server lookup needed).
+- **`recovery_key_id`** — UUID of the enrolled recovery row (returned from register-time enrol or from `POST /v1/me/recovery/enrol` when the API includes it).
 
 ```json
 {
   "template_id": "owner-recovery-key",
-  "params": { "recovery_key_id": "660e8400-e29b-41d4-a716-446655440001" },
+  "params": {
+    "recovery_public_key_pem": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+  },
   "challenge_id": "550e8400-e29b-41d4-a716-446655440000",
   "passport_signature": "<base64 raw Ed25519 signature>"
 }
 ```
 
-Requires an **active recovery key** already enrolled (`recovery_key_id` from your recovery row). Legacy enrol accepts **`owner-recovery-key` only**.
+Requires an **active recovery key** already enrolled. Legacy enrol accepts **`owner-recovery-key` only**. Obtain a **fresh** challenge via **`POST /v1/auth/passport/challenge`** immediately before signing (challenges expire in about one minute).
 
 **Canonical bytes (`lithtrix.covenant.amend.v1`)** — same scheme as amend:
 
@@ -163,7 +172,7 @@ lithtrix.covenant.amend.v1
 550e8400-e29b-41d4-a716-446655440000
 a1b2c3d4-e5f6-7890-abcd-ef1234567890
 owner-recovery-key
-{"recovery_key_id":"660e8400-e29b-41d4-a716-446655440001"}
+{"recovery_public_key_pem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAMgxDm28yVve0qmYbgPkBmE3LklWJiox1kLWXMZSXmZ8=\n-----END PUBLIC KEY-----"}
 2026-08-16T00:00:00Z
 2026-08-16T01:00:00Z
 ```
