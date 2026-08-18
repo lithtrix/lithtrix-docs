@@ -105,6 +105,8 @@ Endpoints that require a **passport signature** share the same challenge flow:
 
 **Canonical bytes (`lithtrix.recovery.enrol.v1`):**
 
+The `<recovery_public_key_pem>` line is the **exact PEM text** you submit in `recovery_public_key`. Before signing, **strip trailing whitespace and newlines** from the PEM block (libraries disagree on whether `-----END PUBLIC KEY-----` is followed by a final newline). The server accepts common variants, but you should canonicalize the same way before computing your signature. Recommended: use the PEM string with **no trailing newline after the END line**.
+
 ```text
 lithtrix.recovery.enrol.v1
 <challenge_id>
@@ -164,6 +166,8 @@ lithtrix.covenant.amend.v1
 ```
 
 `params_json_canonical` = `json.dumps(params, sort_keys=True, separators=(",", ":"))`.
+
+When `params` includes **`recovery_public_key_pem`**, apply the same PEM rule as recovery enrol: strip trailing whitespace/newlines from the PEM block before signing so `params_json_canonical` matches what you intend.
 
 **Worked example:**
 
