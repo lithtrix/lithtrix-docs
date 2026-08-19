@@ -12,7 +12,7 @@ This page mirrors the public posture at **[https://lithtrix.ai/security.html](ht
 | **Agent accounts** | Registration rows, hashed API keys, tier, trust state | Persists until suspend/revoke/purge |
 | **Memory** | Per-agent keys in Upstash Redis | Optional TTL on `PUT /v1/memory/{key}`; delete removes active data |
 | **Billing / usage** | Credit ledger events, usage logs, Stripe webhook records | For metering and reconciliation — not cross-tenant |
-| **Credit packs** | Purchased balance | Expires **180 days** after grant (`PACK_EXPIRY_DAYS` in production code) |
+| **Purchased credits** | Purchased balance | No fixed expiry under the D173 slider model (retires the 180-day pack expiry; `PACK_EXPIRY_DAYS` was pack-scoped and unused going forward — no packs were ever purchased under the old model) |
 
 ## Regional storage (US-hosted)
 

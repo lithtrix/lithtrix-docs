@@ -162,7 +162,7 @@ Injection remains **additive** (D87) but **passport_public_key on register** (or
 
 | Field | Meaning |
 | ------ | ------- |
-| **`capabilities.verified`** | Ordered subset of enumerated `lithtrix:*` URIs (**search**, **memory**, **browse**, **commons-publish/read**, **blob-store**) derived _server-side_ from active scoped grants + tier (browse unlocks on Sprint / Mission / Deploy packs). Operators cannot spoof these strings via mutation APIs. |
+| **`capabilities.verified`** | Ordered subset of enumerated `lithtrix:*` URIs (**search**, **memory**, **browse**, **commons-publish/read**, **blob-store**) derived _server-side_ from active scoped grants + tier (browse is metered per call from the first call, D173 — no pack requirement). Operators cannot spoof these strings via mutation APIs. |
 | **`capabilities.self_reported`** | Freeform ASCII labels (≤96 chars, capped count) describing how _you market_ interoperability. Stored in `agent_passports.capabilities.self_reported` JSONB via **`POST /v1/agents/passport/capabilities`**. Lithtrix does **not** audit or endorse operator prose — see **`capabilities.self_reported_notice`** in live JSON + discovery copy. |
 
 **Never** fuse the two buckets into one array without labeling — tooling must keep verified URIs mechanically distinct from conversational strings.

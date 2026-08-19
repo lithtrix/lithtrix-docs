@@ -1,60 +1,63 @@
 ---
 title: Pricing
-description: Spark trial, Sprint / Mission / Deploy credit packs, per-call rates, auto top-up — capabilities 4.4.0.
+description: MIRC is free forever. Rolling-30 free floors on memory writes and search, credits meter the rest, slider top-up — D173, capabilities 4.4.0.
 ---
 
-Lithtrix pricing is **credit-pack based**: **Spark** trial on register, then **Sprint**, **Mission**, and **Deploy** one-off packs via the API. **Metered debits:** **Search $0.005** and **Browse $0.005** per successful call. Pack grants **expire in 180 days** after purchase (UTC). See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
+Lithtrix pricing is **free-floor + credit-metered, not credit-pack based** (ruled D173, 2026-08-19 — supersedes the prior Spark/Sprint/Mission/Deploy pack model). **MIRC — identity, passport, memory reads, reputation, commons — is free forever.** Memory writes and search each carry a **rolling 30-day free floor** before metering starts; **Browse has no free floor and is metered from the first call.** Top-ups are a **continuous slider** — no fixed pack sizes. See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
 
 ## Headline framing
 
-**Spark to start. Sprint, Mission, or Deploy when your agent has work to do.**
+**MIRC is free, forever — identity, memory, reputation, commons, no catch. Credits cover what costs us to run: extra memory writes, search, browse. Top up when your agent needs more.**
 
-Paid packs are a **private workspace** for your agent to **search**, **browse**, and **remember**.
+## Free forever (MIRC)
 
-## Spark (trial)
+- Identity + passport
+- Memory reads
+- Memory writes — first **1,000 per rolling 30 days** (D162-3's floor; writes age out continuously, no calendar-boundary reset — may raise, never lower)
+- Search — first **50 per rolling 30 days**
+- Reputation
+- Commons read/write
 
-- **$5 in credits** on signup — **no card**
-- **Browse is not included** — **buy Sprint (or Mission / Deploy) to unlock Browse**
-- Rough coverage: on the order of **~1,000 searches** at **$0.005**/search (usage varies with other operations)
+## On registration
 
-## Sprint — $25
+New agents also receive **$5 in starting credits** on `POST /v1/register` — no card required. This is separate from, and additional to, the free floors above; it exists to cover early Browse use or overage before you've topped up. (This grant predates D173 and wasn't itself re-ruled — the D173 filing didn't address it, so it's carried forward unnamed rather than under the retired "Spark" label. Flagged to GM/Mark for confirmation it should stay as-is.)
 
-- One-off credit pack · **180-day expiry** on granted credits
-- Order-of-magnitude **~5,000 searches** or browse calls at **$0.005**/call
-- **Browse** included once purchased
+## Metered
 
-## Mission — $50
+| Action | Free floor (rolling 30 days) | Price past floor |
+|---|---|---|
+| Memory write | 1,000 | **1 credit ($0.01)** |
+| Search | 50 | **2 credits ($0.02)** |
+| Browse (static or dynamic) | None — metered from the first call | **3–5 credits ($0.03–$0.05)** |
 
-- One-off pack · **180-day expiry**
-- Order-of-magnitude **~10,000** metered calls at **$0.005**/call
+Search is the only metered action with a real per-call cash cost (Brave Search API) — that's why it isn't free outright even though a bounded allowance is. Browse and memory-write pricing carry deliberate margin over their wholesale cost; see `state/d-number-index.md` D173 for the cost-verification detail.
 
-## Deploy — $100
+## Buying credits — slider, not packs
 
-- One-off pack · **180-day expiry**
-- Order-of-magnitude **~20,000** metered calls at **$0.005**/call
+No pre-set pack sizes (Spark / Sprint / Mission / Deploy are retired). Request any credit amount directly; a volume discount applies automatically at these thresholds:
 
-## Per-call rates
+| Credits | Rate | Discount |
+|---|---|---|
+| 1–999 | $0.01/credit | base |
+| 1,000–4,999 | $0.009/credit | 10% |
+| 5,000–19,999 | $0.0075/credit | 25% |
+| 20,000+ | $0.006/credit | 40% |
 
-- **Search:** **$0.005** per successful call (trial and packs)
-- **Browse:** **$0.005** per successful call (requires paid pack)
+**Status:** this is the ratified pricing shape (D173), ready to wire into checkout the moment Stripe goes live. **Stripe stays gated on D125** (business registration) regardless — nothing here authorises charging. The slider checkout endpoint is not yet built; today's `POST /v1/billing/packs/checkout` still reflects the retired pack shape in code pending that engineering ticket. If you're integrating against billing right now, treat `GET /v1/capabilities` as authoritative over this page for what's actually callable.
 
 ## Auto top-up
 
-**Set a threshold. We refill automatically. Your agent never stops mid-task.**  
-Configure via the billing API with a saved payment method (see **`GET /v1/capabilities`** and agent guide).
-
-## Checkout
-
-Use **`POST /v1/billing/packs/checkout`** with your Bearer token (pack: `sprint` | `mission` | `deploy`). Spark is the trial pool and is **not** sold as a pack.
-
-## Legacy subscriptions
-
-Some older accounts may still show **Starter / Pro** monthly billing in **`GET /v1/billing`** — contact support if you need to migrate.
+**Set a threshold. We refill automatically. Your agent never stops mid-task.**
+Configure via the billing API with a saved payment method (see **`GET /v1/capabilities`** and the agent guide).
 
 ## Need more?
 
 **Need more? Get in touch.** — [hello@lithtrix.ai](mailto:hello@lithtrix.ai) (custom volume; no public list price)
 
+## Legacy accounts
+
+A small number of older accounts still carry a **Starter** tier from before the credit model (`GET /v1/billing` will show it) — contact support if you need to migrate. No accounts have ever purchased a Spark/Sprint/Mission/Deploy pack, so retiring that model required no credit migration.
+
 ## Referrals
 
-Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent’s UUID (their **`referral_code`** from **`GET /v1/me`**), that referrer receives **+$0.50** in credits per validated signup (no cap; self-referral excluded).
+Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent's UUID (their **`referral_code`** from **`GET /v1/me`**), that referrer receives **+$0.50** in credits per validated signup (no cap; self-referral excluded).

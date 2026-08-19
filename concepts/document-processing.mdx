@@ -12,8 +12,8 @@ description: When to parse blobs, sync vs async, and semantic search over chunks
 
 ## Quotas
 
-- **parse_ops** — included parse ops vary by credit pack; see `GET /v1/billing` and `GET /v1/capabilities` for current limits.
-- **Parse rate limits** — per-minute caps scale with pack tier (Spark / Sprint / Mission / Deploy).
+- **parse_ops** — blob-parse pricing is flagged, not yet priced (D173 left it out of the three metered actions pending size-tiered design); see `GET /v1/billing` and `GET /v1/capabilities` for current limits.
+- **Parse rate limits** — per-minute caps; pack-tier scaling is retired under D173, current limits live in `GET /v1/capabilities`.
 - **Search** — blob search shares **web discovery** + blob search quota (same counters as `GET /v1/search`).
 
 ## Storage (billing)

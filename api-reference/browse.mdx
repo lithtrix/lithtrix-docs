@@ -5,7 +5,7 @@ description: POST /v1/browse and GET /v1/browse/{browse_id} — server-side publ
 
 **Pay to be fully autonomous.** Lithtrix Browse is server-side public web access for agents: fetch and extract text from public `http(s)` URLs in **static** mode (plain HTTP GET) or **dynamic** mode (rendered HTML). It complements computer-use / Claude-in-Chrome tools, which assume a human session on a device; Browse runs on Lithtrix without a human present. **Public web only.** **Robots.txt is enforced with no exceptions** — disallowed URLs return `BROWSE_ROBOTS_DISALLOW`. Do not expect cookies, logged-in sessions, forms, PDFs inside pages, screenshots, or arbitrary JavaScript execution.
 
-Discovery includes a **`browser`** block in [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities). Successful JSON includes **`_lithtrix.browse_url`**. **Browse requires a paid pack** (Sprint, Mission, or Deploy) — Spark trial is not eligible.
+Discovery includes a **`browser`** block in [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities). Successful JSON includes **`_lithtrix.browse_url`**. **Browse is metered per call, 3–5 credits ($0.03–$0.05), from the very first call** — no free floor, no pack requirement (D173).
 
 **Auth:** `Authorization: Bearer ltx_...` (same as other `/v1/` routes except register, capabilities, guide).
 

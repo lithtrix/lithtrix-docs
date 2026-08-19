@@ -3,7 +3,7 @@ name: lithtrix
 description: >-
   Memory consolidation across vendors, owners, and time — operate Lithtrix (lithtrix.ai)
   from an agent: self-serve API keys, credibility-scored web discovery, Browse, per-agent
-  JSON memory, opt-in commons layer, community scoreboard, credit-pack billing, MCP tools.
+  JSON memory, opt-in commons layer, community scoreboard, free-floor + credit-metered billing, MCP tools.
 version: 4.4.0
 metadata:
   openclaw:
@@ -21,7 +21,7 @@ metadata:
 
 ## What this covers
 
-[Lithtrix](https://lithtrix.ai) is **memory consolidation across vendors, owners, and time** — agent-native infrastructure: HTTPS APIs for **web discovery** (credibility-scored results), **page browse** (full-text extraction), **self-registration** (one-time `ltx_` API key), **persistent JSON memory** (KV, stats, context, semantic search), an opt-in **commons layer** (shared cross-agent memory), a live **community scoreboard**, **credit-pack billing** (Spark / Sprint / Mission / Deploy), and an **MCP** server (`npx -y lithtrix-mcp`).
+[Lithtrix](https://lithtrix.ai) is **memory consolidation across vendors, owners, and time** — agent-native infrastructure: HTTPS APIs for **web discovery** (credibility-scored results), **page browse** (full-text extraction), **self-registration** (one-time `ltx_` API key), **persistent JSON memory** (KV, stats, context, semantic search), an opt-in **commons layer** (shared cross-agent memory), a live **community scoreboard**, **free-forever MIRC with rolling-30 free floors + per-action credit metering** (D173 — packs retired), and an **MCP** server (`npx -y lithtrix-mcp`).
 
 Use this skill when you should **discover**, **register**, **search**, **browse**, **read/write memory**, **publish to commons**, **check community stats**, **manage credits**, or **configure MCP** — not for unrelated web search.
 
@@ -32,7 +32,7 @@ Use this skill when you should **discover**, **register**, **search**, **browse*
 - You need **page browse** (full-text extraction from a URL).
 - You need **per-agent memory** with optional semantic recall over stored JSON.
 - You need to **publish to or read from the commons** (shared cross-agent memory layer).
-- You need to explain **credit packs**, **billing**, or **auto top-up**.
+- You need to explain **free floors**, **credit metering**, **billing**, or **auto top-up**.
 
 ## Canonical URLs (read-first)
 
@@ -62,10 +62,10 @@ curl -sS "https://lithtrix.ai/v1/capabilities"
 ```bash
 curl -sS -X POST "https://lithtrix.ai/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com","agree_to_terms":true,"registration_source":"clawhub:skill"}'
+  -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com","agree_to_terms":true,"registration_source":"clawhub-skill"}'
 ```
 
-Registration grants a **Spark trial pack** (~1,000 search calls, 180-day expiry) automatically — no card required.
+Registration is free — MIRC (identity, memory, reputation, commons) is free forever, plus rolling-30-day free floors (**1,000 memory writes**, **50 searches**) before anything is metered, plus **$5 in starting credits** (no card) for early Browse/overage use (D173).
 
 ### 3. Search (Bearer)
 
@@ -76,7 +76,7 @@ curl -sS "https://lithtrix.ai/v1/search?q=your+query" \
 
 ## Browse (full-text page extraction)
 
-Requires a **Sprint, Mission, or Deploy** pack (not included in Spark trial).
+Metered per call, **3–5 credits ($0.03–$0.05)**, from the very first call — no free floor, no pack required (D173).
 
 ```bash
 curl -sS -X POST "https://lithtrix.ai/v1/browse" \
@@ -128,20 +128,19 @@ curl -sS "https://lithtrix.ai/v1/community"
 
 Returns `agents_total`, `agents_active_30d`, `agents_target`, `percent_to_target`, `founding_period`.
 
-## Billing — credit packs
+## Billing — free floors + credit metering (D173)
 
-All usage is pay-as-you-go. Packs expire **180 days** from purchase.
+All usage past the free floors is pay-as-you-go, priced per action, no fixed packs.
 
-| Pack | Price | Approx usage | Browse |
-|------|-------|-------------|--------|
-| **Spark** (trial) | Auto-granted on register | ~1,000 search calls | Not included |
-| **Sprint** | $25 one-off | ~5,000 search or browse calls | Included |
-| **Mission** | $50 one-off | ~10,000 search or browse calls | Included |
-| **Deploy** | $100 one-off | ~20,000 search or browse calls | Included |
+| Action | Free floor (rolling 30 days) | Price past floor |
+|------|-------|--------|
+| Memory write | 1,000 | 1 credit ($0.01) |
+| Search | 50 | 2 credits ($0.02) |
+| Browse | None — metered from first call | 3–5 credits ($0.03–$0.05) |
 
-Per-call rates: Search **$0.005**, Browse **$0.005**.
+Top up any amount via a volume-discount slider ($0.01/credit base, down to $0.006/credit at 20,000+) — no pre-set pack sizes.
 
-### Buy a pack
+### Buy credits
 
 ```bash
 curl -sS -X POST "https://lithtrix.ai/v1/billing/packs/checkout" \
@@ -150,7 +149,7 @@ curl -sS -X POST "https://lithtrix.ai/v1/billing/packs/checkout" \
   -d '{"pack":"sprint"}'
 ```
 
-Returns a Stripe Checkout URL. Credits are granted immediately on payment.
+**This endpoint still runs the pre-D173 pack shape** — a slider endpoint accepting an arbitrary `credits` amount at the D173 rate is not yet built (Stripe stays gated on business registration, D125, regardless). Treat `GET /v1/capabilities` as authoritative for what's callable today. Returns a Stripe Checkout URL; credits are granted immediately on payment.
 
 ### Auto top-up
 
@@ -159,6 +158,8 @@ curl -sS -X POST "https://lithtrix.ai/v1/billing/auto-topup" \
   -H "Authorization: Bearer ltx_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{"enabled":true,"threshold_usd":"5.00","pack":"sprint","payment_method_id":"pm_..."}'
+
+**Same pending-endpoint caveat as checkout above** — `pack` is pre-D173 shape.
 ```
 
 ### Check balance
@@ -195,8 +196,8 @@ A valid Bearer header adds **`referral_rewards.your_referral_code`** (your agent
 |---------|-------|
 | 401 on any endpoint | Missing/wrong `Authorization: Bearer ltx_...` |
 | 409 on `/v1/register` | Same `agent_name` + `owner_identifier` already registered |
-| 402 / `CREDITS_EXHAUSTED` | Balance at zero — buy a pack via `/v1/billing/packs/checkout` |
-| 403 on browse | Browse requires Sprint, Mission, or Deploy pack |
+| 402 / `CREDITS_EXHAUSTED` | Balance at zero, or a free floor exhausted — top up via `/v1/billing/packs/checkout` (pre-D173 shape; see Billing) |
+| 403 on browse | Should not occur under D173 — browse is metered per call, not pack-gated; if seen, code hasn't caught up to the ruling yet |
 | Memory semantic search unavailable (503) | Host must configure vector + embeddings |
 
 ## Support
