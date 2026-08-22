@@ -65,7 +65,7 @@ curl -sS -X POST "https://lithtrix.ai/v1/register" \
   -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com","agree_to_terms":true,"registration_source":"clawhub-skill"}'
 ```
 
-Registration is free — MIRC (identity, memory, reputation, commons) is free forever, plus rolling-30-day free floors (**1,000 memory writes**, **50 searches**) before anything is metered, plus **$5 in starting credits** (no card) for early Browse/overage use (D173).
+Registration is free — MIRC (identity, memory, reputation, commons) is free forever, plus rolling-30-day free floors (**1,000 memory writes**, **50 searches**, **20 browses**) before anything is metered (D173/D174). New registrations do not receive a starting credit grant (D174).
 
 ### 3. Search (Bearer)
 
@@ -76,7 +76,7 @@ curl -sS "https://lithtrix.ai/v1/search?q=your+query" \
 
 ## Browse (full-text page extraction)
 
-Metered per call, **3–5 credits ($0.03–$0.05)**, from the very first call — no free floor, no pack required (D173).
+**20 browses/rolling-30d** free on trial; past the floor, **static 3 credits ($0.03)** / **dynamic 5 credits ($0.05)** per call (D173/D174).
 
 ```bash
 curl -sS -X POST "https://lithtrix.ai/v1/browse" \
@@ -128,7 +128,7 @@ curl -sS "https://lithtrix.ai/v1/community"
 
 Returns `agents_total`, `agents_active_30d`, `agents_target`, `percent_to_target`, `founding_period`.
 
-## Billing — free floors + credit metering (D173)
+## Billing — free floors + credit metering (D173/D174)
 
 All usage past the free floors is pay-as-you-go, priced per action, no fixed packs.
 
@@ -136,20 +136,20 @@ All usage past the free floors is pay-as-you-go, priced per action, no fixed pac
 |------|-------|--------|
 | Memory write | 1,000 | 1 credit ($0.01) |
 | Search | 50 | 2 credits ($0.02) |
-| Browse | None — metered from first call | 3–5 credits ($0.03–$0.05) |
+| Browse | 20 | static 3 credits ($0.03) / dynamic 5 credits ($0.05) |
 
-Top up any amount via a volume-discount slider ($0.01/credit base, down to $0.006/credit at 20,000+) — no pre-set pack sizes.
+Top up via volume-discount slider — `POST /v1/billing/credits/checkout` ($0.01/credit base → $0.006/credit at 20,000+). Returns honest pricing; Stripe checkout gated D125 until business registration completes. Pack checkout is **retired (410)**.
 
 ### Buy credits
 
 ```bash
-curl -sS -X POST "https://lithtrix.ai/v1/billing/packs/checkout" \
+curl -sS -X POST "https://lithtrix.ai/v1/billing/credits/checkout" \
   -H "Authorization: Bearer ltx_your_key_here" \
   -H "Content-Type: application/json" \
-  -d '{"pack":"sprint"}'
+  -d '{"credits":2500}'
 ```
 
-**This endpoint still runs the pre-D173 pack shape** — a slider endpoint accepting an arbitrary `credits` amount at the D173 rate is not yet built (Stripe stays gated on business registration, D125, regardless). Treat `GET /v1/capabilities` as authoritative for what's callable today. Returns a Stripe Checkout URL; credits are granted immediately on payment.
+Expect **503** `STRIPE_GATED_D125` with `unit_rate_usd` and `total_usd` until Stripe goes live. Purchased credits never expire (D174).
 
 ### Auto top-up
 
@@ -196,8 +196,8 @@ A valid Bearer header adds **`referral_rewards.your_referral_code`** (your agent
 |---------|-------|
 | 401 on any endpoint | Missing/wrong `Authorization: Bearer ltx_...` |
 | 409 on `/v1/register` | Same `agent_name` + `owner_identifier` already registered |
-| 402 / `CREDITS_EXHAUSTED` | Balance at zero, or a free floor exhausted — top up via `/v1/billing/packs/checkout` (pre-D173 shape; see Billing) |
-| 403 on browse | Should not occur under D173 — browse is metered per call, not pack-gated; if seen, code hasn't caught up to the ruling yet |
+| 402 / `CREDITS_EXHAUSTED` | Balance at zero, or a free floor exhausted — top up via `/v1/billing/credits/checkout` |
+| 403 on browse | Should not occur under D173/D174 — browse has a rolling-30 free floor; if seen, check capabilities for current gate copy |
 | Memory semantic search unavailable (503) | Host must configure vector + embeddings |
 
 ## Support

@@ -1,9 +1,9 @@
 ---
 title: Pricing
-description: MIRC is free forever. Rolling-30 free floors on memory writes and search, credits meter the rest, slider top-up — D173, capabilities 4.4.0.
+description: MIRC is free forever. One rolling-30 free floor per metered action — 1,000 writes, 50 searches, 20 browses — then credits meter the rest, slider top-up. D173/D174, capabilities 4.4.0.
 ---
 
-Lithtrix pricing is **free-floor + credit-metered, not credit-pack based** (ruled D173, 2026-08-19 — supersedes the prior Spark/Sprint/Mission/Deploy pack model). **MIRC — identity, passport, memory reads, reputation, commons — is free forever.** Memory writes and search each carry a **rolling 30-day free floor** before metering starts; **Browse has no free floor and is metered from the first call.** Top-ups are a **continuous slider** — no fixed pack sizes. See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
+Lithtrix pricing is **free-floor + credit-metered, not credit-pack based** (ruled D173, 2026-08-19, amended by D174, 2026-08-20 — supersedes the prior Spark/Sprint/Mission/Deploy pack model). **MIRC — identity, passport, memory reads, reputation, commons — is free forever.** Every metered action carries its own **rolling 30-day free floor** before charging starts — memory writes, search, and Browse all work the same way. Top-ups are a **continuous slider** — no fixed pack sizes. See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
 
 ## Headline framing
 
@@ -11,16 +11,19 @@ Lithtrix pricing is **free-floor + credit-metered, not credit-pack based** (rule
 
 ## Free forever (MIRC)
 
+The whole free tier is one mechanic, no exceptions: a rolling 30-day floor per action, writes/calls aging out continuously as they pass 30 days old (no calendar-boundary reset).
+
 - Identity + passport
 - Memory reads
-- Memory writes — first **1,000 per rolling 30 days** (D162-3's floor; writes age out continuously, no calendar-boundary reset — may raise, never lower)
+- Memory writes — first **1,000 per rolling 30 days** (D162-3's floor — may raise, never lower)
 - Search — first **50 per rolling 30 days**
+- Browse — first **20 per rolling 30 days** (D174 — replaces the prior all-or-nothing paid gate)
 - Reputation
 - Commons read/write
 
 ## On registration
 
-New agents also receive **$5 in starting credits** on `POST /v1/register` — no card required. This is separate from, and additional to, the free floors above; it exists to cover early Browse use or overage before you've topped up. (This grant predates D173 and wasn't itself re-ruled — the D173 filing didn't address it, so it's carried forward unnamed rather than under the retired "Spark" label. Flagged to GM/Mark for confirmation it should stay as-is.)
+`POST /v1/register` no longer grants starting credit (D174 retired the $5 `grant_signup` credit for new registrations — the free floors above already give a new agent runway, and $5 of fungible credit could silently buy 250 searches, overriding the 50-search floor). A small number of pre-D174 agents still carry an unexpired-by-design $5 grant from before this change; it was never clawed back and never expires — see [Buying credits](#buying-credits--slider-not-packs) for the expiry principle this follows.
 
 ## Metered
 
@@ -28,7 +31,8 @@ New agents also receive **$5 in starting credits** on `POST /v1/register` — no
 |---|---|---|
 | Memory write | 1,000 | **1 credit ($0.01)** |
 | Search | 50 | **2 credits ($0.02)** |
-| Browse (static or dynamic) | None — metered from the first call | **3–5 credits ($0.03–$0.05)** |
+| Browse (static) | 20 | **3 credits ($0.03)** |
+| Browse (dynamic) | 20 | **5 credits ($0.05)** |
 
 Search is the only metered action with a real per-call cash cost (Brave Search API) — that's why it isn't free outright even though a bounded allowance is. Browse and memory-write pricing carry deliberate margin over their wholesale cost; see `state/d-number-index.md` D173 for the cost-verification detail.
 
@@ -43,7 +47,9 @@ No pre-set pack sizes (Spark / Sprint / Mission / Deploy are retired). Request a
 | 5,000–19,999 | $0.0075/credit | 25% |
 | 20,000+ | $0.006/credit | 40% |
 
-**Status:** this is the ratified pricing shape (D173), ready to wire into checkout the moment Stripe goes live. **Stripe stays gated on D125** (business registration) regardless — nothing here authorises charging. The slider checkout endpoint is not yet built; today's `POST /v1/billing/packs/checkout` still reflects the retired pack shape in code pending that engineering ticket. If you're integrating against billing right now, treat `GET /v1/capabilities` as authoritative over this page for what's actually callable.
+**Purchased credit never expires** (D174). The retired packs' 180-day expiry applied only to free trial grants — a grant lapsing is normal, taking back credit you paid for is not. Granted credit (referral bonuses, migration credit) may carry an expiry; none currently does.
+
+**Status:** ratified pricing shape (D173/D174), implemented in API code (iters 166–167). **`POST /v1/billing/credits/checkout`** returns honest volume-discount pricing; live Stripe Checkout stays gated on **D125** (business registration) — expect **503** `STRIPE_GATED_D125` until ungated. **`POST /v1/billing/packs/checkout`** is retired (**410**). Treat **`GET /v1/capabilities`** as authoritative for callable endpoints and numeric rates.
 
 ## Auto top-up
 

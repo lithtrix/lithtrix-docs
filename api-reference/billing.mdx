@@ -1,9 +1,9 @@
 ---
 title: Billing
-description: Free floors (memory writes, search), per-action credit pricing, slider top-up. D173 — packs retired, capabilities 4.4.0.
+description: Rolling-30 free floors, per-action credit pricing, slider top-up. D173/D174 — packs retired, capabilities 4.4.0.
 ---
 
-Pricing shape ruled D173 (2026-08-19) — retires the Spark/Sprint/Mission/Deploy pack model in favor of rolling-30-day free floors plus per-action credit pricing. **The endpoints below still reflect the pre-D173 pack shape in code** — a slider checkout endpoint is not yet built (Stripe stays gated on D125 regardless). Treat `GET /v1/capabilities` as authoritative for what's actually callable today.
+Pricing shape ruled D173 (2026-08-19), amended D174 (2026-08-20) — retires the Spark/Sprint/Mission/Deploy pack model in favor of rolling-30-day free floors plus per-action credit pricing and a volume-discount slider. **`GET /v1/capabilities`** is authoritative for numeric rates and tier copy.
 
 ## Check status
 
@@ -16,9 +16,9 @@ Returns a snapshot of the authenticated agent:
 
 | Field | Meaning |
 |-------|---------|
-| `tier` | Currently `spark`, `sprint`, `mission`, or `deploy` in code (pack-era values — pending update to the D173 shape) |
+| `tier` | DB tier column (`spark`, legacy pack names, or `starter`/`pro` for older subscriptions) |
 | `credits_remaining_usd` | Current spendable credit balance (USD string, 4 decimal places) |
-| `credits_expire_at` | ISO-8601 UTC — when the current pack expires (`null` if no active pack; not applicable once slider top-up ships, since D173 sets no fixed expiry) |
+| `credits_expire_at` | Legacy pack expiry for historical rows; purchased slider credits do not expire (D174) |
 | `tier_label` | Human-readable tier name |
 | `auto_topup` | `true` if auto top-up is configured |
 | `over_limit` | `true` if storage, memory, or parse quota is at cap |
@@ -27,10 +27,10 @@ Returns a snapshot of the authenticated agent:
 | `blob_embed_storage_bytes` | Bytes used by parsed document chunk embeddings |
 | `combined_memory_storage_bytes` | `memory_storage_bytes + blob_embed_storage_bytes` |
 | `search_calls_this_month` | Web-discovery calls this UTC month |
-| `browse_calls_this_month` | Browse calls this UTC month — metered per call, no pack required (D173) |
+| `browse_calls_this_month` | Browse calls this UTC month |
 | `parse_ops_this_month` / `parse_ops_lifetime` | Parse usage |
 
-## Free floors (D173)
+## Free floors (D173/D174)
 
 Before any credit is charged:
 
@@ -38,25 +38,23 @@ Before any credit is charged:
 |---|---|---|
 | Memory write | 1,000 | Rolling 30 days |
 | Search | 50 | Rolling 30 days |
-| Browse | None | Metered from the first call |
+| Browse | 20 | Rolling 30 days |
 
-Past the floor: memory write **1 credit ($0.01)**, search **2 credits ($0.02)**, browse **3–5 credits ($0.03–$0.05)**. See [Pricing](/pricing) for the full breakdown and the volume-discount slider rates.
+Past the floor: memory write **1 credit ($0.01)**, search **2 credits ($0.02)**, browse **static 3 credits ($0.03)** / **dynamic 5 credits ($0.05)**. See [Pricing](/pricing) for the volume-discount slider rates.
 
-## Buy credits
+## Buy credits (slider)
 
 ```bash
-POST /v1/billing/packs/checkout
+POST /v1/billing/credits/checkout
 Authorization: Bearer ltx_your_key
 Content-Type: application/json
 
 {
-  "pack": "sprint"
+  "credits": 2500
 }
 ```
 
-**This endpoint still takes the pre-D173 `pack` enum** (`sprint` / `mission` / `deploy`) — a slider endpoint that accepts an arbitrary credit amount at the D173 volume-discount rate is not yet built. Nobody has ever completed a purchase through this endpoint (`stripe_webhook_events` is empty), so there is no in-flight migration to manage; it's an open engineering ticket, not a breaking change for existing users.
-
-Once the slider endpoint ships, `pack` will be replaced by a `credits` integer, priced per the D173 table:
+Returns honest **`unit_rate_usd`** and **`total_usd`** at the D173 volume-discount table. Until business registration completes (**D125**) and `STRIPE_SLIDER_CHECKOUT_ENABLED` is set, expect **503** with `status: not_live` and `error_code: STRIPE_GATED_D125` — no Stripe Checkout Session is created.
 
 | Credits | Rate | Discount |
 |---|---|---|
@@ -64,6 +62,12 @@ Once the slider endpoint ships, `pack` will be replaced by a `credits` integer, 
 | 1,000–4,999 | $0.009/credit | 10% |
 | 5,000–19,999 | $0.0075/credit | 25% |
 | 20,000+ | $0.006/credit | 40% |
+
+**Purchased credit never expires** (D174). Retired fixed packs used **180-day** expiry on grant-only rows; slider purchases do not set `expires_at`.
+
+### Retired pack checkout
+
+`POST /v1/billing/packs/checkout` returns **410 Gone** (`PACK_CHECKOUT_RETIRED`). Fixed packs are historical only — use the slider endpoint above.
 
 ## Auto top-up
 
@@ -82,17 +86,16 @@ Content-Type: application/json
 }
 ```
 
-The `pack` field here is subject to the same pending endpoint update as checkout above.
+The `pack` field still reflects the pre-D173 auto-topup shape — slider migration is a follow-up when D125 unblocks charging.
 
 ## Webhook
 
-`POST /v1/billing/webhook` — Stripe-signed events. Configure `STRIPE_WEBHOOK_SECRET` on the host.
+`POST /v1/billing/webhook` — Stripe-signed events. Configure `STRIPE_WEBHOOK_SECRET` on the host. Slider purchases use metadata `purchase_type=slider` when live.
 
 ## Environment (ops)
 
-- `STRIPE_PRICE_PACK_SPRINT` — Stripe Price ID for Sprint (pack-era; pending D173 slider migration)
-- `STRIPE_PRICE_PACK_MISSION` — Stripe Price ID for Mission (pack-era; pending D173 slider migration)
-- `STRIPE_PRICE_PACK_DEPLOY` — Stripe Price ID for Deploy (pack-era; pending D173 slider migration)
+- `STRIPE_SLIDER_CHECKOUT_ENABLED` — `false` until D125 go-live (default)
 - `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- Legacy pack Price IDs (`STRIPE_PRICE_PACK_*`) — dormant; retained for historical webhook rows only
 
-See also [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities) for the `pricing` block and per-call rates, and [Pricing](/pricing) for the full D173 shape.
+See also [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities) for the `pricing` block and per-call rates, and [Pricing](/pricing) for the full D173/D174 shape.

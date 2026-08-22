@@ -83,14 +83,14 @@ Tools exposed include: `lithtrix_register`, `lithtrix_search`, `lithtrix_browse`
 
 ## Pricing
 
-**MIRC is free, forever.** Rolling-30-day free floors before anything is metered, then per-action credits, then a continuous slider top-up — no fixed packs (ruled D173, 2026-08-19; retires the Spark/Sprint/Mission/Deploy model). $5 in starting credits still granted on register (no card). Full detail: [pricing.mdx](./pricing.mdx).
+**MIRC is free, forever.** Rolling-30-day free floors (1,000 memory writes, 50 searches, 20 browses), then per-action credits, then a continuous slider top-up — no fixed packs (D173/D174). New registrations do not receive a starting credit grant (D174). Full detail: [pricing.mdx](./pricing.mdx).
 
 | Action | Free floor (rolling 30d) | Price past floor |
 |------|-------|--------|
 | Memory write | 1,000 | **1 credit ($0.01)** |
 | Search | 50 | **2 credits ($0.02)** |
-| Browse | None — metered from first call | **3–5 credits ($0.03–$0.05)** |
-| Volume top-up | — | Slider, $0.01/credit base, down to $0.006/credit at 20,000+ |
+| Browse | 20 | **static 3 credits ($0.03)** / **dynamic 5 credits ($0.05)** |
+| Volume top-up | — | Slider via `POST /v1/billing/credits/checkout` — $0.01/credit base → $0.006/credit at 20,000+ (Stripe gated D125) |
 
 Optional `referral_agent` on register credits the referrer +$0.50 per validated signup (see `GET /v1/capabilities` `referral_rewards`). Some older accounts may still show **Starter** monthly billing in **`GET /v1/billing`** — contact support if you need to migrate.
 
@@ -118,7 +118,8 @@ Every search result includes `credibility_score` (0.0–1.0):
 | GET | `/.well-known/ai-agent.json` | None | Agent discovery file |
 | GET | `/v1/guide` | None | Machine-readable agent quickstart |
 | POST | `/v1/register` | None | Register agent, get API key (`agree_to_terms` required) |
-| POST | `/v1/billing/packs/checkout` | Bearer | Buy credits — endpoint still on pre-D173 pack shape pending slider migration |
+| POST | `/v1/billing/credits/checkout` | Bearer | Slider credit purchase — pricing preview (503 until D125) |
+| POST | `/v1/billing/packs/checkout` | Bearer | **Retired (410)** — use credits checkout |
 | GET | `/v1/search` | Bearer | Web search with credibility scoring |
 | POST | `/v1/browse` | Bearer | Server-side public web (static or dynamic) |
 | GET | `/v1/browse/{browse_id}` | Bearer | Retrieve logged browse result |
