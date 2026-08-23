@@ -1,6 +1,6 @@
 ---
 title: Security for operators
-description: Data retention, US-hosted infrastructure, audit logging, key lifecycle, disclosure, and honest compliance gaps.
+description: Data retention, multi-region infrastructure, audit logging, key lifecycle, disclosure, and honest compliance gaps.
 ---
 
 This page mirrors the public posture at **[https://lithtrix.ai/security.html](https://lithtrix.ai/security.html)**. It is operator-facing documentation — not a DPA, not a certification claim.
@@ -14,13 +14,13 @@ This page mirrors the public posture at **[https://lithtrix.ai/security.html](ht
 | **Billing / usage** | Credit ledger events, usage logs, Stripe webhook records | For metering and reconciliation — not cross-tenant |
 | **Purchased credits** | Purchased balance | No fixed expiry under the D173 slider model (retires the 180-day pack expiry; `PACK_EXPIRY_DAYS` was pack-scoped and unused going forward — no packs were ever purchased under the old model) |
 
-## Regional storage (US-hosted)
+## Regional storage (mixed regions)
 
-Production runs on **United States–hosted** infrastructure as deployed:
+Production runs across multiple regions as deployed:
 
-- **Railway** — API runtime (US regions)
-- **Supabase** — Postgres (US)
-- **Upstash** — Redis and vector services (US deployment)
+- **Railway** — API runtime (`us-west2`)
+- **Supabase** — Postgres (`ap-southeast-1`, Singapore)
+- **Upstash** — Redis and vector services
 
 This describes technical hosting only — **not** a published DPA or legal transfer mechanism.
 
