@@ -49,7 +49,7 @@ No pre-set pack sizes (Spark / Sprint / Mission / Deploy are retired). Request a
 
 **Purchased credit never expires** (D174). The retired packs' 180-day expiry applied only to free trial grants — a grant lapsing is normal, taking back credit you paid for is not. Granted credit (referral bonuses, migration credit) may carry an expiry; none currently does.
 
-**Status:** ratified pricing shape (D173/D174), implemented in API code (iters 166–167). **`POST /v1/billing/credits/checkout`** returns honest volume-discount pricing; live Stripe Checkout stays gated on **D125** (business registration) — expect **503** `STRIPE_GATED_D125` until ungated. **`POST /v1/billing/packs/checkout`** is retired (**410**). Treat **`GET /v1/capabilities`** as authoritative for callable endpoints and numeric rates.
+**Status:** ratified pricing shape (D173/D174), implemented in API code (iters 166–167). **`POST /v1/billing/credits/checkout`** returns honest volume-discount pricing; live Stripe Checkout stays gated on **D125** (business registration) — expect **503** `STRIPE_GATED_D125` until ungated. Until checkout is live, email **[hello@lithtrix.ai](mailto:hello@lithtrix.ai)** for an invoice. **`POST /v1/billing/packs/checkout`** is retired (**410**). Treat **`GET /v1/capabilities`** as authoritative for callable endpoints and numeric rates.
 
 ## Auto top-up
 
