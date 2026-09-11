@@ -42,6 +42,7 @@
       "group": "Concepts",
       "pages": [
         "concepts/memory-consolidation",
+        "concepts/memory-ledger",
         "concepts/rate-limits",
         "concepts/errors",
         "concepts/credibility-scoring",

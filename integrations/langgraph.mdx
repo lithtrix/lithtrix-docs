@@ -121,6 +121,10 @@ LangGraph's `(namespace_tuple, key)` gets flattened into a single Lithtrix key, 
 
 Values are capped at **512 KiB** per key (local preflight check + API enforcement).
 
+## Memory ledger (Arc 36 — no package change)
+
+`LithtrixStore` uses the same `/v1/memory` routes. Underneath, Lithtrix appends ledger versions on PUT and tombstones on DELETE; your graph still sees normal upsert/get/absent semantics. Delete via the store with `put(namespace, key, None)` — MCP has **no** delete tool (set / get / search / context only). Optional `derived_from` on PUT is available at the REST layer if you call the API directly — the store adapter does not set it today. See [Memory ledger](/concepts/memory-ledger).
+
 ## What we're not claiming
 
 - **Not adoption.** We built and instrumented this integration ourselves. It is a working reference, not evidence of LangGraph user adoption.

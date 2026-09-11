@@ -79,4 +79,24 @@ All errors use a consistent envelope:
 | `JOURNAL_ATTESTATION_INVALID` | 400 | Bad `commit_attestation` |
 | `JOURNAL_COMMITMENT_DUPLICATE` | 409 | Hash already committed |
 
+### Memory ledger (Arc 36)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `MEMORY_LEDGER_UNAVAILABLE` | 503 | Ledger write could not complete |
+| `MEMORY_LEDGER_VERSION_CONFLICT` | 409 | Concurrent version race — retry the PUT/DELETE |
+
+Invalid `derived_from` ranges return **422** request validation (not a separate `error_code`).
+
+### Consolidation policy (Arc 36)
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `CONSOLIDATION_POLICY_NOT_FOUND` | 404 | No active policy row (owner GET before first amend) |
+| `CONSOLIDATION_POLICY_PARAMS_INVALID` | 400 | Params schema rejected |
+| `CONSOLIDATION_POLICY_AMEND_FORBIDDEN` | 403 | Amend blocked (policy or epoch) |
+| `CONSOLIDATION_POLICY_TEMPLATE_INVALID` | 400 | `template_id` must be `consolidation-v1` |
+| `PASSPORT_SIGNATURE_REQUIRED` | 403 | Amend without passport signature |
+| `PASSPORT_SIGNATURE_INVALID` | 403 | Bad or expired challenge signature |
+
 Authoritative discovery list: `GET /v1/capabilities` → teaching blocks (also `lithtrix-api/app/routers/discovery.py`).

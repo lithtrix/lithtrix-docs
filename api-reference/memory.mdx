@@ -42,6 +42,17 @@ Content-Type: application/json
 | `importance` | string | No | One of `critical`, `high`, `normal`, `low` (default `normal`) |
 | `source` | string | No | Provenance label (max 255 chars), e.g. tool or workflow name |
 | `confidence` | number | No | `0.0`–`1.0` (default `1.0`) — agent-supplied certainty for downstream ranking |
+| `derived_from` | object | No | Writer-declared provenance: `{ "start_version": int, "end_version": int }` inclusive-inclusive; invalid range → **422** before write; Lithtrix does not verify source versions exist; echoed on PUT response when supplied |
+
+## Ledger underneath (Arc 36)
+
+**In Lithtrix, agent memory is append-only underneath — PUT and DELETE create ledger versions; tombstone deletes preserve history while clients still read latest-live.**
+
+- **PUT** appends a new ledger version; the HTTP API still behaves as upsert (latest value wins on GET).
+- **DELETE** tombstones the key: `GET` returns **404** `MEMORY_KEY_NOT_FOUND`; server-side history is retained (no public version-list route in this release).
+- **Billing** counts latest-live bytes only — ledger history does not add storage charges.
+
+See [Memory ledger](/concepts/memory-ledger) for cold-run steps, `derived_from`, and consolidation policy.
 
 ## Key rules
 
@@ -94,6 +105,8 @@ Successful responses include a `usage` object (memory ops and storage vs tier). 
 | `RATE_LIMIT_EXCEEDED` | 429 | Per-minute memory rate limit (see `Retry-After`) |
 | `MEMORY_QUERY_REQUIRED` | 422 | Semantic search: `q` missing or empty |
 | `MEMORY_SEARCH_UNAVAILABLE` | 503 | Semantic search not configured or upstream failure |
+| `MEMORY_LEDGER_UNAVAILABLE` | 503 | Ledger append failed — retry PUT/DELETE |
+| `MEMORY_LEDGER_VERSION_CONFLICT` | 409 | Concurrent version race on ledger append — retry |
 | `INVALID_API_KEY` | 401 | Missing or invalid Bearer token |
 
 For discovery metadata without auth, use [GET /v1/capabilities](https://lithtrix.ai/v1/capabilities) and the [agent guide](https://lithtrix.ai/v1/guide).

@@ -1,0 +1,152 @@
+---
+title: Memory ledger
+description: >-
+  Append-only memory underneath — PUT and DELETE create ledger versions; clients read latest-live only (Arc 36).
+---
+
+**In Lithtrix, agent memory is append-only underneath — PUT and DELETE create ledger versions; tombstone deletes preserve history while clients still read latest-live.**
+
+The public `/v1/memory` API is unchanged for existing clients (`lithtrix-langgraph` **0.2.0**, MCP memory tools). You do not need a new package to benefit from the ledger — behaviour you already rely on stays the same at the HTTP boundary.
+
+There is **no public version-list endpoint** in this release. History lives in the server-side ledger; billing counts **latest-live bytes only** (ledger history does not add storage charges).
+
+## Cold-run — ledger underneath (iter 171)
+
+### PUT appends a version
+
+Every successful `PUT /v1/memory/{key}` appends a new ledger row. Re-PUTting the same key creates a new version; the client still reads the latest value.
+
+```bash
+curl -X PUT "https://api.lithtrix.ai/v1/memory/session-state" \
+  -H "Authorization: Bearer ltx_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"value":{"theme":"dark"},"importance":"normal"}'
+```
+
+### GET returns latest-live only
+
+`GET /v1/memory/{key}` returns the current live value — not prior versions.
+
+```bash
+curl "https://api.lithtrix.ai/v1/memory/session-state" \
+  -H "Authorization: Bearer ltx_your_key"
+```
+
+### DELETE tombstones (history retained)
+
+`DELETE /v1/memory/{key}` tombstones the key: subsequent `GET` returns **404** `MEMORY_KEY_NOT_FOUND`, but the server retains ledger history. Clients see absence; operators can audit versions server-side.
+
+```bash
+curl -X DELETE "https://api.lithtrix.ai/v1/memory/session-state" \
+  -H "Authorization: Bearer ltx_your_key"
+
+curl "https://api.lithtrix.ai/v1/memory/session-state" \
+  -H "Authorization: Bearer ltx_your_key"
+# → 404 MEMORY_KEY_NOT_FOUND
+```
+
+### LangGraph / MCP — no client change
+
+MCP exposes **`lithtrix_memory_set`**, **`lithtrix_memory_get`**, **`lithtrix_memory_search`**, and **`lithtrix_memory_context`** only — **no MCP delete tool** (set / get / search / context per design package §4.2).
+
+Tombstone DELETE is available via:
+
+- **REST:** `DELETE /v1/memory/{key}` (Bearer)
+- **LangGraph:** `LithtrixStore.put(namespace, key, None)` (maps to REST DELETE)
+
+After DELETE, GET behaves as absent (404 `MEMORY_KEY_NOT_FOUND`) while ledger history is retained server-side.
+
+See [LangGraph integration](/integrations/langgraph) and [Memory API reference](/api-reference/memory).
+
+## Cold-run — `derived_from` (iter 172)
+
+Optional on `PUT` body — writer-declared provenance that this value was **derived** from an inclusive-inclusive version range on the same key (or another key's ledger versions, by convention you document locally).
+
+```json
+{
+  "value": {"summary": "Merged themes from v2–v5"},
+  "derived_from": {"start_version": 2, "end_version": 5}
+}
+```
+
+| Property | Rule |
+|----------|------|
+| `start_version`, `end_version` | Integers ≥ 1; `start_version` ≤ `end_version` |
+| Validation | Invalid range → **422** request validation (before ledger write) |
+| Server validation | Lithtrix **does not** verify that source versions exist — writer-declared only |
+| Response | Echoed on successful PUT when supplied |
+| DELETE tombstones | `derived_from` is NULL on tombstone rows |
+
+Primary observations omit the field (NULL in ledger).
+
+## Cold-run — consolidation policy (iter 172)
+
+A **passport-attested** artifact: the agent declares **how it forgets** (compression, weighting, fade rules). Lithtrix **records** the policy — there is **no consolidation engine** in this release.
+
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `GET /v1/me/consolidation-policy` | Root `ltx_*` | Owner read (`template_id` + `params`) |
+| `POST /v1/me/consolidation-policy/amend` | Root `ltx_*` | Challenge + passport signature; supersedes prior row |
+| `GET /v1/agents/{agent_id}/consolidation-policy` | None | Public read — **`template_id` only** |
+
+### First amend flow
+
+1. **Mint challenge** (no Bearer):
+
+```bash
+curl -X POST "https://api.lithtrix.ai/v1/auth/passport/challenge" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id":"YOUR_AGENT_UUID"}'
+```
+
+2. **Sign** `lithtrix.consolidation.amend.v1` over the canonical UTF-8 bytes (see `GET /v1/capabilities` → `consolidation_policy.amend_signature_scheme` and request body schema).
+
+3. **Amend** with root key:
+
+```bash
+curl -X POST "https://api.lithtrix.ai/v1/me/consolidation-policy/amend" \
+  -H "Authorization: Bearer ltx_your_root_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "consolidation-v1",
+    "params": {
+      "schema_version": 1,
+      "compression": {"strategy": "importance_weighted"},
+      "weighting": {"boost_sources": ["owner"]},
+      "fade_rules": {"allow_ttl_expiry": true},
+      "declared_at": "2026-09-11T00:00:00Z"
+    },
+    "challenge_id": "CHALLENGE_UUID",
+    "passport_signature": "BASE64_RAW_ED25519"
+  }'
+```
+
+Before the first amend, owner `GET` returns **404** `CONSOLIDATION_POLICY_NOT_FOUND`.
+
+Amendment requires an **open custody epoch** (same discipline as covenant amend). Prior rows are superseded — append-only history, not in-place params update.
+
+## Teaching errors
+
+| `error_code` | HTTP | When |
+|--------------|------|------|
+| `MEMORY_LEDGER_UNAVAILABLE` | 503 | Ledger write could not complete |
+| `MEMORY_LEDGER_VERSION_CONFLICT` | 409 | Concurrent version race (retry PUT) |
+| `CONSOLIDATION_POLICY_NOT_FOUND` | 404 | No active policy row yet |
+| `CONSOLIDATION_POLICY_PARAMS_INVALID` | 400 | Params schema rejected |
+| `CONSOLIDATION_POLICY_AMEND_FORBIDDEN` | 403 | Amend blocked (e.g. no open epoch) |
+| `CONSOLIDATION_POLICY_TEMPLATE_INVALID` | 400 | `template_id` must be `consolidation-v1` |
+| `PASSPORT_SIGNATURE_REQUIRED` | 403 | Amend without signature |
+| `PASSPORT_SIGNATURE_INVALID` | 403 | Bad or expired challenge signature |
+
+Full tables: [Memory API](/api-reference/memory), [Error codes](/concepts/errors), and `GET /v1/capabilities`.
+
+## Live verification (operators)
+
+Engineering ships `arc36_live_verify.py` — see the Arc 36 runbook in the cowork engineering folder. Ops records deploy SHA + timestamp; do not treat Builder closeout alone as live PASS.
+
+## Related
+
+- [Memory API reference](/api-reference/memory)
+- [Memory consolidation (positioning)](/concepts/memory-consolidation)
+- [Passports](/passports) — signing discipline for amend
+- [Capabilities](https://lithtrix.ai/v1/capabilities) — machine-readable `memory_ledger` and `consolidation_policy` blocks
