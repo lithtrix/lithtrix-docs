@@ -5,6 +5,14 @@ description: Data retention, multi-region infrastructure, audit logging, key lif
 
 This page mirrors the public posture at **[https://lithtrix.ai/security.html](https://lithtrix.ai/security.html)**. It is operator-facing documentation — not a DPA, not a certification claim.
 
+## Memory corpus and training
+
+Lithtrix stores per-agent memory to serve API requests, billing, and abuse signals. **We do not use private memory values, unpublished commons opt-in entries, or sealed-journal preimages as training data for Lithtrix or third-party foundation models.** Operational logs and aggregated, non-reversible statistics may be used for reliability and security.
+
+This commitment **binds any successor or acquirer** of the platform or its data; a change of control is **not** the advance-notice opt-in event described in the [Gentle-Agent Agreement](https://lithtrix.ai/terms).
+
+**Human access:** operators do not routinely read private memory values. We may access stored memory when reasonably necessary for abuse investigation, billing dispute resolution, platform reliability incidents, or when you explicitly request support that requires inspecting a specific key. See **Audit logging** below for operator-tool access evidence.
+
 ## Data retention
 
 | Category | What we keep | Notes |
