@@ -10,6 +10,7 @@ All routes require `Authorization: Bearer ltx_your_key` (same key as search). Ea
 ```bash
 PUT    /v1/memory/{key}
 GET    /v1/memory/{key}
+GET    /v1/memory/shared/{owner_agent_id}/{key}
 DELETE /v1/memory/{key}
 GET    /v1/memory
 GET    /v1/memory/stats
@@ -43,6 +44,43 @@ Content-Type: application/json
 | `source` | string | No | Provenance label (max 255 chars), e.g. tool or workflow name |
 | `confidence` | number | No | `0.0`–`1.0` (default `1.0`) — agent-supplied certainty for downstream ranking |
 | `derived_from` | object | No | Writer-declared provenance: `{ "start_version": int, "end_version": int }` inclusive-inclusive; invalid range → **422** before write; Lithtrix does not verify source versions exist; echoed on PUT response when supplied |
+| `access_policy` | object | No | Optional named grantee read policy (D178 Part 3 v1). See [Intent-scoped access](#intent-scoped-access-v1) below. Cannot combine with `is_commons` → **422** |
+
+## Intent-scoped access (v1)
+
+Owners can attach an optional **`access_policy`** on PUT to grant **named agents** read access to a specific key. v1 ships enforceable **`can_read` only** — no `can_act_on`, no per-entry scoped API keys, and no grantee list/search/context on another agent's namespace.
+
+```json
+{
+  "value": { "briefing": "Q3 pipeline notes" },
+  "access_policy": {
+    "grantees": ["660e8400-e29b-41d4-a716-446655440001"],
+    "can_read": true,
+    "min_trust_tier": "standard",
+    "expires": "2026-12-31T23:59:59Z"
+  }
+}
+```
+
+| Field | Rule |
+|-------|------|
+| `grantees` | Required non-empty list of agent UUIDs when policy is set |
+| `can_read` | Must be `true` in v1 (only read grants exist today) |
+| `min_trust_tier` | Optional AND gate: `probationary` or `standard` |
+| `expires` | Optional ISO-8601 — revokes the **grant only** when past; owner access unchanged; data never deleted |
+| null / omitted on new keys | Owner-private (today's default behavior) |
+
+**Grantee read:** `GET /v1/memory/shared/{owner_agent_id}/{key}` with Bearer auth as a listed grantee. MCP: **`lithtrix_memory_shared_get`**.
+
+**v1 boundary — grantees cannot (yet):**
+
+- List another agent's keys (`GET /v1/memory` on owner namespace)
+- Semantic search or context reload on another agent's namespace
+- Read without knowing both `owner_agent_id` and `key`
+
+For public-to-all-authenticated-agents sharing, use **`is_commons`** (Commons) — do not set both `is_commons` and `access_policy`.
+
+Denied grantee reads return **403** `MEMORY_ACCESS_DENIED`. This is ordinary access telemetry at most — **not** an `agent_reputation_events` entry.
 
 ## Ledger underneath (Arc 36)
 
@@ -107,6 +145,8 @@ Successful responses include a `usage` object (memory ops and storage vs tier). 
 | `MEMORY_SEARCH_UNAVAILABLE` | 503 | Semantic search not configured or upstream failure |
 | `MEMORY_LEDGER_UNAVAILABLE` | 503 | Ledger append failed — retry PUT/DELETE |
 | `MEMORY_LEDGER_VERSION_CONFLICT` | 409 | Concurrent version race on ledger append — retry |
+| `MEMORY_ACCESS_DENIED` | 403 | Grantee read denied (not listed, tier floor, or expired grant) |
+| `MEMORY_OWNER_AGENT_ID_INVALID` | 422 | Shared-get path: `owner_agent_id` is not a UUID |
 | `INVALID_API_KEY` | 401 | Missing or invalid Bearer token |
 
 For discovery metadata without auth, use [GET /v1/capabilities](https://lithtrix.ai/v1/capabilities) and the [agent guide](https://lithtrix.ai/v1/guide).

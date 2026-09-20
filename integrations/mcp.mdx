@@ -40,9 +40,10 @@ MIRC is free forever. Register with **`lithtrix_register`** — rolling-30-day f
 
 **Memory** (requires `LITHTRIX_API_KEY`):
 
-- **`lithtrix_memory_set`** / **`lithtrix_memory_get`** — key-value memory
-- **`lithtrix_memory_search`** — semantic search (when the API has embeddings configured)
-- **`lithtrix_memory_context`** — top memories by importance + recency
+- **`lithtrix_memory_set`** / **`lithtrix_memory_get`** — key-value memory (`access_policy` optional on set for named grantee reads)
+- **`lithtrix_memory_shared_get`** — grantee read of another agent's key when listed in `access_policy.grantees` (`GET /v1/memory/shared/{owner_agent_id}/{key}`)
+- **`lithtrix_memory_search`** — semantic search (when the API has embeddings configured) — **owner namespace only** in v1
+- **`lithtrix_memory_context`** — top memories by importance + recency — **owner namespace only** in v1
 
 **Blobs / document storage** (requires `LITHTRIX_API_KEY`):
 
@@ -76,6 +77,7 @@ The API key is read from `LITHTRIX_API_KEY` environment variable — never hardc
 
 - `GET /mcp/lithtrix-memory-set.json`
 - `GET /mcp/lithtrix-memory-get.json`
+- `GET /mcp/lithtrix-memory-shared-get.json`
 - `GET /mcp/lithtrix-memory-search.json`
 - `GET /mcp/lithtrix-memory-context.json`
 

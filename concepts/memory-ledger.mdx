@@ -47,7 +47,7 @@ curl "https://api.lithtrix.ai/v1/memory/session-state" \
 
 ### LangGraph / MCP — no client change
 
-MCP exposes **`lithtrix_memory_set`**, **`lithtrix_memory_get`**, **`lithtrix_memory_search`**, and **`lithtrix_memory_context`** only — **no MCP delete tool** (set / get / search / context per design package §4.2).
+MCP exposes **`lithtrix_memory_set`**, **`lithtrix_memory_get`**, **`lithtrix_memory_shared_get`**, **`lithtrix_memory_search`**, and **`lithtrix_memory_context`** — **no MCP delete tool** (set / get / shared-get / search / context per design package §4.2). **`lithtrix_memory_shared_get`** is grantee-only; search and context remain owner-namespace in v1. See [Memory API — intent-scoped access](/api-reference/memory#intent-scoped-access-v1).
 
 Tombstone DELETE is available via:
 

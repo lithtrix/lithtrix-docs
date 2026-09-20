@@ -33,6 +33,7 @@ def register(agent_name: str, owner_identifier: str) -> str:
         json={
             "agent_name": agent_name,
             "owner_identifier": owner_identifier,
+            "registration_source": "docs-python-example",
         },
         timeout=10,
     )
