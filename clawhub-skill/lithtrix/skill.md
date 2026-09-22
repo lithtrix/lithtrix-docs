@@ -138,7 +138,7 @@ All usage past the free floors is pay-as-you-go, priced per action, no fixed pac
 | Search | 50 | 2 credits ($0.02) |
 | Browse | 20 | static 3 credits ($0.03) / dynamic 5 credits ($0.05) |
 
-Top up via volume-discount slider — `POST /v1/billing/credits/checkout` ($0.01/credit base → $0.006/credit at 20,000+). Returns honest pricing; Stripe checkout gated D125 until business registration completes. Pack checkout is **retired (410)**.
+Top up via volume-discount slider — `POST /v1/billing/credits/checkout` ($0.01/credit base → $0.006/credit at 20,000+). When Airwallex is configured, returns `intent_id`, `client_secret`, and `billing_page_url` — complete payment on billing.lithtrix.ai. Pack checkout is **retired (410)**.
 
 ### Buy credits
 
@@ -149,7 +149,7 @@ curl -sS -X POST "https://lithtrix.ai/v1/billing/credits/checkout" \
   -d '{"credits":2500}'
 ```
 
-Expect **503** `STRIPE_GATED_D125` with `unit_rate_usd` and `total_usd` until Stripe goes live. Purchased credits never expire (D174).
+If billing is not configured on the host, expect **503** `BILLING_NOT_CONFIGURED` with `unit_rate_usd` and `total_usd` (preview only). Purchased credits never expire (D174).
 
 ### Auto top-up
 
@@ -157,9 +157,9 @@ Expect **503** `STRIPE_GATED_D125` with `unit_rate_usd` and `total_usd` until St
 curl -sS -X POST "https://lithtrix.ai/v1/billing/auto-topup" \
   -H "Authorization: Bearer ltx_your_key_here" \
   -H "Content-Type: application/json" \
-  -d '{"enabled":true,"threshold_usd":"5.00","pack":"sprint","payment_method_id":"pm_..."}'
+  -d '{"enabled":true,"threshold_usd":"5.00","credits":2500}'
 
-**Same pending-endpoint caveat as checkout above** — `pack` is pre-D173 shape.
+Requires `POST /v1/billing/setup-intent` first (MIT consent saved on your agent row).
 ```
 
 ### Check balance

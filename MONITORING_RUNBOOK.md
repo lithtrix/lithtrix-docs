@@ -88,11 +88,11 @@ Watch for `CIRCUIT_OPEN` in Railway logs. If Brave is having an extended outage,
 
 ---
 
-## Stripe Webhook Failures
+## Airwallex webhook failures
 
-Check Stripe Dashboard → Developers → Webhooks → lithtrix endpoint for failed deliveries.
+Check Airwallex Console → Webhooks for failed deliveries to `POST /v1/billing/airwallex/webhook`.
 
-If `STRIPE_WEBHOOK_SECRET` is wrong or rotated, webhook verification will fail silently (logged but not surfaced to users). Symptoms: Pro upgrade appears to work but tier doesn't change in DB. Fix: update `STRIPE_WEBHOOK_SECRET` in Railway and re-send failed events from Stripe dashboard.
+If `AIRWALLEX_WEBHOOK_SECRET` is wrong or rotated, HMAC verification fails (logged; events are not processed). Symptoms: slider purchase completes in Airwallex but credits do not grant in Lithtrix. Fix: update `AIRWALLEX_WEBHOOK_SECRET` in Railway and replay failed events from the Airwallex dashboard.
 
 ---
 

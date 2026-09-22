@@ -22,6 +22,9 @@ Returns a snapshot of the authenticated agent:
 | `tier_label` | Human-readable tier name |
 | `auto_topup` | `true` if auto top-up is configured |
 | `over_limit` | `true` if storage, memory, or parse quota is at cap |
+| `payment_processor` | Live processor when configured (`airwallex`) |
+| `payment_customer_id` | Processor customer id when present |
+| `recharge_consent_id` | Saved MIT consent for auto top-up |
 | `memory_ops_this_month` | Memory operations logged this UTC month |
 | `memory_storage_bytes` | KV JSON storage (bytes) |
 | `blob_embed_storage_bytes` | Bytes used by parsed document chunk embeddings |
@@ -54,7 +57,9 @@ Content-Type: application/json
 }
 ```
 
-Returns honest **`unit_rate_usd`** and **`total_usd`** at the D173 volume-discount table. Until business registration completes (**D125**) and `STRIPE_SLIDER_CHECKOUT_ENABLED` is set, expect **503** with `status: not_live` and `error_code: STRIPE_GATED_D125` — no Stripe Checkout Session is created.
+When **Airwallex** billing is configured on the host (`AIRWALLEX_*` credentials), returns **200** with `intent_id`, `client_secret`, `billing_page_url` (Split Card Elements on [billing.lithtrix.ai](https://billing.lithtrix.ai)), plus `unit_rate_usd` and `total_usd` at the D173 volume-discount table. Card data stays in the browser — Lithtrix creates the PaymentIntent server-side only.
+
+If billing is not configured yet, expect **503** with `status: not_live` and `error_code: BILLING_NOT_CONFIGURED` — honest pricing preview only, no charge.
 
 | Credits | Rate | Discount |
 |---|---|---|
@@ -65,13 +70,30 @@ Returns honest **`unit_rate_usd`** and **`total_usd`** at the D173 volume-discou
 
 **Purchased credit never expires** (D174). Retired fixed packs used **180-day** expiry on grant-only rows; slider purchases do not set `expires_at`.
 
+### Client config
+
+```bash
+GET /v1/billing/config
+```
+
+Returns `payment_processor`, `publishable_key`, `billing_page_url`, and `js_env` for Airwallex.js — no auth required.
+
 ### Retired pack checkout
 
 `POST /v1/billing/packs/checkout` returns **410 Gone** (`PACK_CHECKOUT_RETIRED`). Fixed packs are historical only — use the slider endpoint above.
 
+## Save payment method (auto top-up)
+
+```bash
+POST /v1/billing/setup-intent
+Authorization: Bearer ltx_your_key
+```
+
+Creates a zero-amount Airwallex PaymentIntent for card capture and unscheduled MIT consent. Complete payment on the billing page; `payment_consent.verified` webhook persists `recharge_consent_id` on your agent row.
+
 ## Auto top-up
 
-Set a threshold and saved payment method — Lithtrix refills automatically when your balance drops below it.
+Set a threshold and credit amount — Lithtrix refills automatically when your balance drops below the threshold (merchant-initiated transaction using your saved consent).
 
 ```bash
 POST /v1/billing/auto-topup
@@ -81,21 +103,19 @@ Content-Type: application/json
 {
   "enabled": true,
   "threshold_usd": "5.00",
-  "pack": "sprint",
-  "payment_method_id": "pm_..."
+  "credits": 2500
 }
 ```
 
-The `pack` field still reflects the pre-D173 auto-topup shape — slider migration is a follow-up when D125 unblocks charging.
+Requires a saved payment method and `recharge_consent_id` from the setup-intent flow above.
 
-## Webhook
+## Webhook (ops)
 
-`POST /v1/billing/webhook` — Stripe-signed events. Configure `STRIPE_WEBHOOK_SECRET` on the host. Slider purchases use metadata `purchase_type=slider` when live.
+`POST /v1/billing/airwallex/webhook` — Airwallex HMAC-signed events. Configure `AIRWALLEX_WEBHOOK_SECRET` on the host. Slider purchases grant on `payment_intent.succeeded` with metadata `purchase_type=slider`.
 
 ## Environment (ops)
 
-- `STRIPE_SLIDER_CHECKOUT_ENABLED` — `false` until D125 go-live (default)
-- `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
-- Legacy pack Price IDs (`STRIPE_PRICE_PACK_*`) — dormant; retained for historical webhook rows only
+- `AIRWALLEX_CLIENT_ID`, `AIRWALLEX_API_KEY`, `AIRWALLEX_PUBLISHABLE_KEY`, `AIRWALLEX_WEBHOOK_SECRET`
+- `AIRWALLEX_BILLING_PAGE_ORIGIN` — CORS origin for [billing.lithtrix.ai](https://billing.lithtrix.ai)
 
 See also [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities) for the `pricing` block and per-call rates, and [Pricing](/pricing) for the full D173/D174 shape.

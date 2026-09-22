@@ -24,7 +24,7 @@ Lithtrix is a web search API designed from scratch for agents:
 - **MCP-native**: `npx -y lithtrix-mcp` and it's available in Claude Desktop or any MCP client
 - **Self-service billing**: agents can upgrade to Pro by calling the billing API — no dashboard
 
-Free tier is 300 lifetime calls (no card, no reset). Pro is usage-based via Stripe.
+Free tier is 300 lifetime calls (no card, no reset). Top up credits via the API slider checkout (Airwallex on billing.lithtrix.ai).
 
 Stack: FastAPI + Supabase + Upstash Redis + Brave Search + Railway.
 

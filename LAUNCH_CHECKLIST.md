@@ -15,9 +15,11 @@ Verify all are set in Railway → lithtrix-api → Variables:
 - [x] `API_BASE_URL` = `https://lithtrix.ai`
 - [x] `UPSTASH_REDIS_REST_URL`
 - [x] `UPSTASH_REDIS_REST_TOKEN`
-- [x] `STRIPE_SECRET_KEY`
-- [x] `STRIPE_PUBLISHABLE_KEY`
-- [x] `STRIPE_WEBHOOK_SECRET`
+- [x] `AIRWALLEX_CLIENT_ID`
+- [x] `AIRWALLEX_API_KEY`
+- [x] `AIRWALLEX_PUBLISHABLE_KEY`
+- [x] `AIRWALLEX_WEBHOOK_SECRET`
+- [x] `AIRWALLEX_BILLING_PAGE_ORIGIN` = `https://billing.lithtrix.ai`
 - [x] `ADMIN_API_KEY`
 - [x] `ALLOWED_ORIGINS` = `https://lithtrix.ai,https://www.lithtrix.ai`
 - [x] `FREE_TIER_LIFETIME_LIMIT` = `300`
@@ -37,58 +39,26 @@ UPDATE agents SET monthly_limit = 300 WHERE tier = 'free' AND monthly_limit = 10
 
 ---
 
-## 3. Stripe Webhook
+## 3. Airwallex webhook + billing page
 
-In Stripe Dashboard → Developers → Webhooks:
+In Airwallex Console → Webhooks:
 
-- [x] Endpoint URL: `https://lithtrix.ai/v1/billing/webhook`
-- [x] Events: `invoice.payment_succeeded`, `invoice.payment_failed`
-- [x] Signing secret copied to Railway `STRIPE_WEBHOOK_SECRET`
+- [ ] Endpoint URL: `https://api.lithtrix.ai/v1/billing/airwallex/webhook` (or your `API_BASE_URL` host)
+- [ ] Events: `payment_intent.succeeded`, `payment_consent.verified`, `payment_attempt.authorization_failed`
+- [ ] Signing secret copied to Railway `AIRWALLEX_WEBHOOK_SECRET`
 
-Test the webhook:
+Cloudflare Pages **lithtrix-billing** (Split Card Elements) deployed and git-connected; `ALLOWED_ORIGINS` includes `AIRWALLEX_BILLING_PAGE_ORIGIN`.
+
+### Verify billing config (public)
+
 ```bash
-# Stripe CLI (if installed)
-stripe trigger invoice.payment_succeeded
+curl https://api.lithtrix.ai/v1/billing/config
+# Expected: payment_processor "airwallex", publishable_key set, billing_page_url
 ```
 
----
-
-## 3b. Switch Stripe to Live Mode
-
-Do this immediately before announcing. Not required for API verification — required before real users pay.
-
-### Step 1 — Get live keys from Stripe Dashboard
-Stripe Dashboard → Developers → toggle **"Test mode" OFF** (top right) → API keys:
-- Copy `sk_live_...` → this is your new `STRIPE_SECRET_KEY`
-- Copy `pk_live_...` → this is your new `STRIPE_PUBLISHABLE_KEY`
-
-### Step 2 — Register a live webhook
-Still in live mode: Stripe Dashboard → Developers → Webhooks → Add endpoint:
-- URL: `https://lithtrix.ai/v1/billing/webhook`
-- Events: `invoice.payment_succeeded`, `invoice.payment_failed`
-- Copy the new signing secret → this is your new `STRIPE_WEBHOOK_SECRET`
-
-(The test webhook you set up in item 3 only fires in test mode — it will not receive live events.)
-
-### Step 3 — Update Railway env vars
-Railway → lithtrix-api → Variables — update all three:
-```
-STRIPE_SECRET_KEY      = sk_live_...
-STRIPE_PUBLISHABLE_KEY = pk_live_...
-STRIPE_WEBHOOK_SECRET  = whsec_... (the new live webhook secret)
-```
-Railway auto-redeploys on variable save.
-
-### Step 4 — Verify
-```bash
-curl https://lithtrix.ai/v1/billing/config
-# Expected: {"stripe_publishable_key":"pk_live_..."}
-```
-Confirm the key starts with `pk_live_` not `pk_test_`.
-
-- [ ] Live Stripe keys set in Railway
-- [ ] Live webhook endpoint registered in Stripe dashboard
-- [ ] `/v1/billing/config` returns `pk_live_...`
+- [ ] `AIRWALLEX_*` credentials set in Railway (sandbox or production per environment)
+- [ ] Webhook registered in Airwallex dashboard
+- [ ] `/v1/billing/config` returns `payment_processor: airwallex`
 
 ---
 
@@ -305,12 +275,12 @@ git push -u origin main
 - Pick a tweet from [`launch/tweet.md`](launch/tweet.md).
 - Optional: [`launch/show_hn.md`](launch/show_hn.md) on HN.
 
-### Before announcing — Stripe live (checklist §3b)
+### Before announcing — Airwallex live (checklist §3)
 
-Flip **test → live** keys + **live** webhook secret in Railway, then confirm:
+Confirm production Airwallex credentials, webhook URL, and billing page deploy, then:
 
 ```bash
-curl https://lithtrix.ai/v1/billing/config
+curl https://api.lithtrix.ai/v1/billing/config
 ```
 
-Response must include **`pk_live_...`**.
+Response must include **`payment_processor":"airwallex"`** and a publishable key.

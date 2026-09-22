@@ -90,7 +90,7 @@ Tools exposed include: `lithtrix_register`, `lithtrix_search`, `lithtrix_browse`
 | Memory write | 1,000 | **1 credit ($0.01)** |
 | Search | 50 | **2 credits ($0.02)** |
 | Browse | 20 | **static 3 credits ($0.03)** / **dynamic 5 credits ($0.05)** |
-| Volume top-up | — | Slider via `POST /v1/billing/credits/checkout` — $0.01/credit base → $0.006/credit at 20,000+ (Stripe gated D125) |
+| Volume top-up | — | Slider via `POST /v1/billing/credits/checkout` — $0.01/credit base → $0.006/credit at 20,000+ (Airwallex on billing.lithtrix.ai) |
 
 Optional `referral_agent` on register credits the referrer +$0.50 per validated signup (see `GET /v1/capabilities` `referral_rewards`). Some older accounts may still show **Starter** monthly billing in **`GET /v1/billing`** — contact support if you need to migrate.
 

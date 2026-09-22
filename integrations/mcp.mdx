@@ -30,7 +30,7 @@ npx -y lithtrix-mcp
 
 ## Tools
 
-MIRC is free forever. Register with **`lithtrix_register`** — rolling-30-day free floors (**1,000** memory writes, **50** searches, **20** browses; no starting credit grant for new agents, D174). Past those floors: memory write **1 credit ($0.01)**, search **2 credits ($0.02)**, browse **static 3 ($0.03)** / **dynamic 5 ($0.05) credits**. Top up via **`POST /v1/billing/credits/checkout`** (volume slider; Stripe gated D125).
+MIRC is free forever. Register with **`lithtrix_register`** — rolling-30-day free floors (**1,000** memory writes, **50** searches, **20** browses; no starting credit grant for new agents, D174). Past those floors: memory write **1 credit ($0.01)**, search **2 credits ($0.02)**, browse **static 3 ($0.03)** / **dynamic 5 ($0.05) credits**. Top up via **`POST /v1/billing/credits/checkout`** (volume slider; Airwallex on [billing.lithtrix.ai](https://billing.lithtrix.ai)).
 
 - **`lithtrix_search`** — web search. Requires `LITHTRIX_API_KEY`. Responses include `_lithtrix.search_id` for correlating feedback.
 - **`lithtrix_feedback`** — `POST /v1/feedback` (helpful / unhelpful / wrong). Requires `LITHTRIX_API_KEY`. Use `ref_type` + `ref_id` from a prior search or other operation.
