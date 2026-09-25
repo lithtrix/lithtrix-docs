@@ -1,0 +1,47 @@
+---
+title: Agent freeze (kill switch)
+description: In-place irreversible freeze via POST /v1/me/freeze — D178 Part 1, API v1.
+---
+
+## What it is
+
+**Agent freeze** is an in-place **kill switch** for a registered agent: it sets `agents.frozen_at` (UTC) and blocks normal API use without rotating keys or transferring custody.
+
+Shipped in **D178 Part 1** (free on all tiers). Discoverable under **`GET /v1/capabilities`** → `security.freeze` and MCP `lithtrix_freeze`.
+
+## Request
+
+```http
+POST /v1/me/freeze
+Authorization: Bearer ltx_...   # root key only
+```
+
+- **Root `ltx_*` required** — scoped sub-keys cannot freeze the parent.
+- **Idempotent** — repeat calls return the same `frozen_at` timestamp.
+- **Irreversible via API v1** — there is no self-service unfreeze; operator recovery is out of scope for this route.
+
+## What freeze does
+
+| Effect | Detail |
+|--------|--------|
+| Bearer auth | Blocked for most routes after freeze |
+| Still allowed | `GET /v1/capabilities`, `GET /v1/me`, `POST /v1/me/freeze` |
+| Swarm children | Scoped sub-keys get **403** `PARENT_AGENT_FROZEN` at auth |
+| Delegations | Active delegations where this agent is **parent** are invalidated |
+| Task trace | Append denied for frozen agents |
+
+Enforcement applies to **Lithtrix API calls** authenticated with Lithtrix keys — not to local model runtime or off-platform actions.
+
+## Not the same as
+
+| Mechanism | Difference |
+|-----------|------------|
+| **Custody transfer** | Changes holder / epoch; freeze keeps the DID in place |
+| **Recovery / rebirth** | Rotates root key and opens a new epoch; freeze does not rotate keys |
+| **Key revoke** | Revokes one key material; freeze blocks the agent identity |
+
+See [Custody and recovery](/custody-and-recovery).
+
+## MCP
+
+Tool definition: `GET /mcp/v1/lithtrix-freeze.json` — same semantics as the HTTP route.

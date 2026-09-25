@@ -43,6 +43,9 @@
       "pages": [
         "concepts/memory-consolidation",
         "concepts/memory-ledger",
+        "concepts/agent-freeze",
+        "concepts/policy-bindings",
+        "concepts/action-trail",
         "concepts/rate-limits",
         "concepts/errors",
         "concepts/credibility-scoring",

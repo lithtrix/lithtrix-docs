@@ -1,0 +1,53 @@
+---
+title: Action trail export
+description: Human-legible export of task_trace_events for delegation participants — D178 Part 1.
+---
+
+## What it is
+
+The **action trail** is a paginated, human-legible export of existing **`task_trace_events`** across every `task_id` where the caller is **parent** or **recipient** on an `agent_delegations` row.
+
+Shipped in **D178 Part 1** (free agent export). Operators use a separate admin route. Discoverable under **`GET /v1/capabilities`** → `swarm.action_trail`.
+
+This is **audit assembly**, not a new event source — agents still append trace events via `POST /v1/tasks/{task_id}/trace/events` as in [Swarm trace](/swarm/trace).
+
+## Agent export
+
+```http
+GET /v1/me/action-trail?limit=50&page=1
+Authorization: Bearer ltx_...
+```
+
+| Param | Rule |
+|-------|------|
+| `limit` | 1–200 (default per capabilities) |
+| `page` | 1-based pagination |
+
+**JSON** by default.
+
+### CSV
+
+```http
+GET /v1/me/action-trail?format=csv
+```
+
+or `Accept: text/csv`.
+
+## Admin export (operator)
+
+```http
+GET /admin/action-trail
+X-Admin-Key: ...
+```
+
+Requires **`X-Admin-Key`**. Same underlying events; broader audit chain for operators.
+
+## Related surfaces
+
+| Surface | Purpose |
+|---------|---------|
+| `GET /v1/me/activity` | Browse / content feedback / HITL approvals — **not** swarm task trace ([Activity](/activity)) |
+| `GET /v1/tasks/{task_id}/trace` | Per-task trace for participants |
+| `GET /v1/me/action-trail` | Cross-task export for an agent |
+
+Paid operator export (Arc 38) may build on this trail; the free export documents what is already stored.

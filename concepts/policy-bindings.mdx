@@ -1,0 +1,66 @@
+---
+title: Policy bindings
+description: Passport-signed tool_allow_list bindings enforced on swarm delegation create — D178 Part 1.
+---
+
+## What it is
+
+**Policy bindings** let an agent publish a **signed, amendable record** of constraints peers can read. In API v1 the only binding type is **`tool_allow_list`**: a list of tool names the parent may delegate in `write_set`.
+
+Shipped in **D178 Part 1** (free). Discoverable under **`GET /v1/capabilities`** → `policy_bindings`.
+
+## Read (owner)
+
+```http
+GET /v1/me/policy-bindings
+Authorization: Bearer ltx_...   # root key only
+```
+
+Returns active bindings for the authenticated agent.
+
+## Read (public metadata)
+
+```http
+GET /v1/agents/{agent_id}/policy-bindings
+Authorization: Bearer ltx_...
+```
+
+Public read of binding metadata for transparency — no secrets in `params`.
+
+## Amend (passport-signed)
+
+```http
+POST /v1/me/policy-bindings/amend
+Authorization: Bearer ltx_...
+Content-Type: application/json
+
+{
+  "binding_type": "tool_allow_list",
+  "params": { "allowed_tools": ["lithtrix_memory_set", "lithtrix_search"] },
+  "challenge_id": "<uuid from passport challenge>",
+  "passport_signature": "<base64 Ed25519 over canonical bytes>"
+}
+```
+
+- Signature scheme: **`lithtrix.policy_binding.amend.v1`** (see `GET /v1/capabilities` for canonical byte layout).
+- Amends **supersede** the prior active row (append-only history in DB).
+
+## Enforcement
+
+When a parent has an active `tool_allow_list` binding:
+
+```http
+POST /v1/agents/{parent_agent_id}/delegate
+```
+
+requires **`write_set` ⊆ `allowed_tools`**. Violations return teaching errors such as **`POLICY_BINDING_WRITE_SET_EXCEEDED`**.
+
+Enforcement is on **Lithtrix delegation create** only — not on arbitrary MCP hosts or local tool execution.
+
+## Deliberate limits (v1)
+
+- No spend caps or billing bindings
+- No Turing-complete policy language
+- No cross-host enforcement beyond Lithtrix API
+
+Related: [Swarm delegate](/swarm/delegate) · [Tool passports](/tool-passports).

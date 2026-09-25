@@ -5,6 +5,10 @@ description: Rolling-30 free floors, per-action credit pricing, slider top-up. D
 
 Pricing shape ruled D173 (2026-08-19), amended D174 (2026-08-20) — retires the Spark/Sprint/Mission/Deploy pack model in favor of rolling-30-day free floors plus per-action credit pricing and a volume-discount slider. **`GET /v1/capabilities`** is authoritative for numeric rates and tier copy.
 
+<Warning>
+**Test mode.** Billing currently runs on the Airwallex **sandbox**: checkout accepts test cards only and cannot take real payments yet. Credits granted in test mode are test money and carry a `[SANDBOX]` ledger note. This notice is removed when production billing is live.
+</Warning>
+
 ## Check status
 
 ```bash
@@ -22,7 +26,7 @@ Returns a snapshot of the authenticated agent:
 | `tier_label` | Human-readable tier name |
 | `auto_topup` | `true` if auto top-up is configured |
 | `over_limit` | `true` if storage, memory, or parse quota is at cap |
-| `payment_processor` | Live processor when configured (`airwallex`) |
+| `payment_processor` | Configured processor (`airwallex`) |
 | `payment_customer_id` | Processor customer id when present |
 | `recharge_consent_id` | Saved MIT consent for auto top-up |
 | `memory_ops_this_month` | Memory operations logged this UTC month |

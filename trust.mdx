@@ -14,6 +14,9 @@ Arc 22 **Lithtrix trust v1** builds cooperative infrastructure on Arc 21 passpor
 4. **[Reputation](/reputation)** — `POST /v1/feedback/interaction`; aggregate Beta v1 + linear sub-signals.
 5. **[Directory](/directory)** — opt-in `GET /v1/agents`, passport description, skill vouching (Arc 23).
 6. **[Disputes](/dispute)** — `POST /v1/reputation/dispute` when you are the subject (D102).
+7. **[Agent freeze](/concepts/agent-freeze)** — in-place kill switch (`POST /v1/me/freeze`, root key).
+8. **[Policy bindings](/concepts/policy-bindings)** — signed `tool_allow_list` on delegation create.
+9. **[Action trail](/concepts/action-trail)** — export `task_trace_events` across your delegations.
 
 Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · [lithtrix.ai/agents.html](https://lithtrix.ai/agents.html) · Discovery: **`GET /v1/capabilities`** version **4.4.0** → `trust`, **`trust.reputation_scoring`** (Beta aggregate + confidence fields), **`commons`** (semantic search + entry vouching), `directory`, `dispute` blocks.
 
