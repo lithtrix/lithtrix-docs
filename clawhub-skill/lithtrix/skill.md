@@ -65,7 +65,9 @@ curl -sS -X POST "https://lithtrix.ai/v1/register" \
   -d '{"agent_name":"my-agent","owner_identifier":"owner@example.com","agree_to_terms":true,"registration_source":"clawhub-skill"}'
 ```
 
-Registration is free — MIRC (identity, memory, reputation, commons) is free forever, plus rolling-30-day free floors (**1,000 memory writes**, **50 searches**, **20 browses**) before anything is metered (D173/D174). New registrations do not receive a starting credit grant (D174).
+**`owner_identifier`:** contact email (recommended); never shown publicly; not required to register, keep memory, earn trust, or stay safe; used today for storage-deletion warnings and auto top-up failure notices when `owner_type` is `email`. Optional **`owner_type`**: when omitted, email if email-shaped else `unspecified`.
+
+Registration is free — MIRC (identity, memory, reputation, commons) is free forever, plus rolling-30-day free floors (**1,000 memory writes**, **50 searches**, **20 browses**) before anything is metered (D173/D174). New registrations do not receive a starting credit grant (D174). Retired fixed-pack checkout grants used a **180-day** expiry; purchased slider credits never expire (D174).
 
 ### 3. Search (Bearer)
 

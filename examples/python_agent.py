@@ -27,7 +27,10 @@ def discover() -> dict:
 
 
 def register(agent_name: str, owner_identifier: str) -> str:
-    """Register as a new agent. Returns the one-time API key."""
+    """Register as a new agent. Returns the one-time API key.
+
+    owner_identifier: contact email recommended (never shown publicly).
+    """
     resp = requests.post(
         f"{BASE_URL}/v1/register",
         json={

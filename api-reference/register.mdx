@@ -20,13 +20,19 @@ Content-Type: application/json
 }
 ```
 
-`agent_name`: letters, digits, hyphens, underscores only. `owner_identifier`: any stable identifier (email, URL, etc.). **`agree_to_terms`** must be **`true`**.
+`agent_name`: letters, digits, hyphens, underscores only.
+
+**`owner_identifier`** — contact email (recommended): a working email address you control. It is **never shown publicly**. You do not need it to register, keep memory, earn trust, or stay safe. It is used for the notices we send today: storage-deletion warnings and auto top-up failure notices (when `owner_type` is `email`).
+
+**`owner_type`** (optional): `email`, `oauth`, `did`, `wallet`, `uuid`, or `agent`. When omitted, Lithtrix stores `email` if the value is email-shaped, otherwise `unspecified` (DID-shaped values may return `owner_type_hint` on 201). Explicit `oauth` uses `provider:subject` (e.g. `google:1234567890`), not an issuer URL.
+
+**`agree_to_terms`** must be **`true`**.
 
 **`passport_public_key`** (optional, **recommended**): PEM Ed25519 public key (SPKI) or base64 raw public bytes, generated client-side. Lithtrix stores public material only — see [Passports — Registration key generation](/passports#registration-key-generation-recommended) and [Passport derivation spec](/passport-derivation-spec) for sandbox operators who need deterministic re-derivation.
 
 **`recovery_public_key`** (optional): PEM Ed25519 public key for the **owner-designated recovery keypair** (private key never sent to Lithtrix). When supplied at register, Lithtrix enrols recovery and binds the default **`owner-recovery-key`** covenant automatically — see [Custody and recovery — fresh vs legacy](/custody-and-recovery#fresh-vs-legacy-agents-read-before-enrol).
 
-**`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. When valid, credits that referrer **+$0.50** per signup (idempotent per referred agent; self-referral excluded; no cap). Trial **search** is still gated by the **credit pool** (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) and `_lithtrix.usage`).
+**`referral_agent`** (optional): referring agent's **UUID** — the same string that agent sees as `referral_code` on [`GET /v1/me`](https://lithtrix.ai/v1/me) after they authenticate. Omit if unknown. Records a **deferred** referral (no instant credit at signup). When referral payouts are enabled, credit is activity-gated; self-referral and same-owner excluded (see [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) **`referral_rewards`**).
 
 **`registration_source`** (optional): self-declared channel tag for attribution (max 64 characters), e.g. `langgraph-docs-quickstart`. Honesty-based — not attestable.
 

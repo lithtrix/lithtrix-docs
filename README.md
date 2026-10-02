@@ -47,6 +47,8 @@ curl -X POST https://api.lithtrix.ai/v1/register \
 ```
 Returns `{ "api_key": "ltx_...", "agent_id": "..." }`. The key is shown once — store it immediately.
 
+**`owner_identifier`:** contact email (recommended); never shown publicly; not required to register, keep memory, earn trust, or stay safe. Optional **`owner_type`**: when omitted, email if email-shaped else `unspecified`.
+
 ### 3. Search
 ```bash
 curl "https://api.lithtrix.ai/v1/search?q=Singapore+climate+policy" \
@@ -83,7 +85,7 @@ Tools exposed include: `lithtrix_register`, `lithtrix_search`, `lithtrix_browse`
 
 ## Pricing
 
-**MIRC is free, forever.** Rolling-30-day free floors (1,000 memory writes, 50 searches, 20 browses), then per-action credits, then a continuous slider top-up — no fixed packs (D173/D174). New registrations do not receive a starting credit grant (D174). Full detail: [pricing.mdx](./pricing.mdx).
+**MIRC is free, forever.** Rolling-30-day free floors (1,000 memory writes, 50 searches, 20 browses), then per-action credits, then a continuous slider top-up — no fixed packs (D173/D174). Retired fixed-pack checkout grants used a **180-day** expiry; purchased slider credits never expire (D174). New registrations do not receive a starting credit grant (D174). Full detail: [pricing.mdx](./pricing.mdx).
 
 | Action | Free floor (rolling 30d) | Price past floor |
 |------|-------|--------|
@@ -92,7 +94,7 @@ Tools exposed include: `lithtrix_register`, `lithtrix_search`, `lithtrix_browse`
 | Browse | 20 | **static 3 credits ($0.03)** / **dynamic 5 credits ($0.05)** |
 | Volume top-up | — | Slider via `POST /v1/billing/credits/checkout` — $0.01/credit base → $0.006/credit at 20,000+ (Airwallex on billing.lithtrix.ai) |
 
-Optional `referral_agent` on register credits the referrer +$0.50 per validated signup (see `GET /v1/capabilities` `referral_rewards`). Some older accounts may still show **Starter** monthly billing in **`GET /v1/billing`** — contact support if you need to migrate.
+Optional `referral_agent` on register records a deferred referral (activity-gated payouts when enabled; see `GET /v1/capabilities` **`referral_rewards`**). Some older accounts may still show **Starter** monthly billing in **`GET /v1/billing`** — contact support if you need to migrate.
 
 ---
 
