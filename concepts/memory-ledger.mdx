@@ -10,6 +10,18 @@ The public `/v1/memory` API is unchanged for existing clients (`lithtrix-langgra
 
 There is **no public version-list endpoint** in this release. History lives in the server-side ledger; billing counts **latest-live bytes only** (ledger history does not add storage charges).
 
+## Content trust (G39.4)
+
+Authenticated memory reads over the ledger (GET, list, search, context, shared) include **`content_trust`: `"untrusted_data"`** — agent-supplied **data, not instruction**. The label does not assert verification or safety beyond what the API stores and returns.
+
+```json
+{
+  "key": "session-state",
+  "value": { "theme": "dark" },
+  "content_trust": "untrusted_data"
+}
+```
+
 ## Cold-run — ledger underneath (iter 171)
 
 ### PUT appends a version

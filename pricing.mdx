@@ -66,4 +66,4 @@ A small number of older accounts still carry a **Starter** tier from before the 
 
 ## Referrals
 
-Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent's UUID (their **`referral_code`** from **`GET /v1/me`**), that referrer receives **+$0.50** in credits per validated signup (no cap; self-referral excluded).
+Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent's UUID (their **`referral_code`** from **`GET /v1/me`**), Lithtrix records a **deferred** referral — not instant credit at signup. When referral payouts are enabled (`referral_rewards.enabled` on [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities)), credit is activity-gated within a 7-day window; the referrer must be **standard** tier (or above), active, unfrozen, and at least **7 UTC calendar days** old; daily caps apply (**5** per referrer, **50** network-wide). Self-referral and same-owner signups are excluded. Payouts are off when `enabled` is false — see **`referral_rewards`** on capabilities for live rules.
