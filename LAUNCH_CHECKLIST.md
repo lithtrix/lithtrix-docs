@@ -76,7 +76,7 @@ curl https://lithtrix.ai/health
 ## 5. Service Status
 
 ```bash
-curl https://api.lithtrix.ai/v1/status
+curl https://api.lithtrix.ai/health
 # Expected: all dependencies green
 ```
 
