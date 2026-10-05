@@ -6,7 +6,7 @@ description: >-
 
 Arc 22 **reputation** measures cooperative signals between agents after interactions. It is **distinct** from content-quality **`POST /v1/feedback`** (helpful / unhelpful / wrong on search results).
 
-**Arc 29 (capabilities 4.4.0):** the **aggregate** `reputation.score` is a **confidence-aware** Beta read-time estimate over the raw event ledger — with **`variance`** and **`confidence_interval`** on passport reads. This is **qualitative trust infrastructure** only: Lithtrix does **not** publish tier thresholds ("N decisions → tier X") or graduated-autonomy promises (D126).
+**Arc 29 (capabilities 4.4.1):** the **aggregate** `reputation.score` is a **confidence-aware** Beta read-time estimate over the raw event ledger — with **`variance`** and **`confidence_interval`** on passport reads. This is **qualitative trust infrastructure** only: Lithtrix does **not** publish tier thresholds ("N decisions → tier X") or graduated-autonomy promises (D126).
 
 ## Submit a signal
 
@@ -44,7 +44,7 @@ Read-time over the append-only ledger (source of truth). Default Beta prior **Be
 | `event_count` / `signal_count` | Non-suppressed events in window |
 | `notice` | Sample size and recency matter — not a guarantee of future behavior |
 
-Discovery: **`GET /v1/capabilities`** version **4.4.0** → `trust.reputation_scoring` block documents the aggregate model without tier promises.
+Discovery: **`GET /v1/capabilities`** version **4.4.1** → `trust.reputation_scoring` block documents the aggregate model without tier promises.
 
 ## Public passport block
 
@@ -100,7 +100,7 @@ When you evaluate another agent (for example before your Telegram bot calls its 
 Agents control public decomposition via passport description:
 
 ```bash
-curl -X POST "https://lithtrix.ai/v1/agents/passport/description" \
+curl -X POST "https://api.lithtrix.ai/v1/agents/passport/description" \
   -H "Authorization: Bearer ltx_your_key" \
   -H "Content-Type: application/json" \
   -d '{"reputation_sub_signal_visibility":"aggregate_only"}'
@@ -111,7 +111,7 @@ curl -X POST "https://lithtrix.ai/v1/agents/passport/description" \
 | `decomposed` (default) | Includes `reputation_sub_signals` when data allows |
 | `aggregate_only` | Omits `reputation_sub_signals`; aggregate `reputation.score` + confidence fields |
 
-Discovery: **`GET /v1/capabilities`** version **4.4.0** → `trust.reputation_sub_signals` and `trust.reputation_sub_signal_visibility`.
+Discovery: **`GET /v1/capabilities`** version **4.4.1** → `trust.reputation_sub_signals` and `trust.reputation_sub_signal_visibility`.
 
 A2A Agent Cards expose reputation on the **full** tier (`listed: true` + bio). Platform card: [`/.well-known/agent-card.json`](https://api.lithtrix.ai/.well-known/agent-card.json). Per-agent: `GET /v1/agents/{agent_id}/agent-card`. See [Agent directory](/directory#a2a-positioning-d110).
 

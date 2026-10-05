@@ -9,7 +9,7 @@ Day-to-day operational reference. Read once, keep handy.
 ### 1. Health
 ```bash
 curl https://lithtrix.ai/health
-curl https://lithtrix.ai/v1/status
+curl https://api.lithtrix.ai/v1/status
 ```
 Both should return 200. If `/v1/status` shows a dependency down, check Railway logs.
 

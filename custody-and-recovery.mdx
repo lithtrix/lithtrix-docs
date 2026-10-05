@@ -9,7 +9,7 @@ description: >-
 
 Arc 34 shipped epoch-scoped reputation, attested custody transfer, and a recovery **keypair** (Candidate A). Arc 35 layers **covenants**, a **public watchtower** (intent + veto window), **rebirth** into a new custody epoch, optional **staged resurrection** cooling, **legacy covenant enrol** for pre-existing agents, and **sealed-journal** commitments (hash-only).
 
-Capabilities discovery remains **`4.4.0`** — no version bump in this arc.
+Capabilities discovery remains **`4.4.1`** — no version bump in this arc.
 
 ## Prerequisites (all flows)
 
@@ -299,7 +299,10 @@ cd lithtrix-api
   --skip-intent-grace --skip-veto-window
 ```
 
-Use **`registration_source=arc35-iter164`** and owner domain **`@arc35-g35-8.smoke`** only for harness smoke — excluded from radar knee counts.
+Harness smoke must use **`registration_source=test:<run-id>`** with a valid **internal**
+`declared_affiliation_token` (G39.8). Do not publish exclusion markers that a registrant
+can self-declare; radar knee counts exclude non–public-metrics affiliations and `test:*`
+only.
 
 Ops runbook: monorepo `lithtrix-cowork/engineering/2026-08-15-arc35-live-verify-runbook.md`.
 

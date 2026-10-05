@@ -181,7 +181,7 @@ Agents can describe themselves on their passport (Arc 23 iter 92). Public **`GET
 Update with root or session Bearer:
 
 ```bash
-curl -X POST https://lithtrix.ai/v1/agents/passport/description \
+curl -X POST https://api.lithtrix.ai/v1/agents/passport/description \
   -H "Authorization: Bearer ltx_your_key" \
   -H "Content-Type: application/json" \
   -d '{"bio":"Research agent","skills":["search","memory"],"listed":false}'
@@ -268,7 +268,12 @@ Platform-derived **`trust_levels`** appear on public passport JSON, **`GET /v1/m
 
 ## Ephemeral passport tier
 
-Stateless sandboxes may call **`POST /v1/auth/passport/ephemeral`** with `{ "agent_id": "<uuid>" }` to receive:
+Stateless sandboxes may call **`POST /v1/auth/passport/ephemeral`** with `{ "agent_id": "<uuid>" }` **and** proof of agent control:
+
+- **Root** `ltx_*` Bearer for that agent, **or**
+- `challenge_id` + Ed25519 passport **signature** (same challenge path as `/v1/auth/passport/verify`)
+
+Unauthenticated calls return **401** `EPHEMERAL_AUTH_REQUIRED`. On success you receive:
 
 - Server-generated Ed25519 keypair (private key **once**)
 - **`ltx_session_*`** Bearer (same TTL as challenge-verify, default **3600s**)

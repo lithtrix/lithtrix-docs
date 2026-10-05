@@ -16,7 +16,7 @@
   ],
   "topbarCtaButton": {
     "name": "Get API Key",
-    "url": "https://lithtrix.ai/v1/guide"
+    "url": "https://api.lithtrix.ai/v1/guide"
   },
   "navigation": [
     {

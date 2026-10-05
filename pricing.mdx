@@ -1,6 +1,6 @@
 ---
 title: Pricing
-description: MIRC is free forever. One rolling-30 free floor per metered action — 1,000 writes, 50 searches, 20 browses — then credits meter the rest, slider top-up. D173/D174, capabilities 4.4.0.
+description: MIRC is free forever. One rolling-30 free floor per metered action — 1,000 writes, 50 searches, 20 browses — then credits meter the rest, slider top-up. D173/D174, capabilities 4.4.1.
 ---
 
 Lithtrix pricing is **free-floor + credit-metered, not credit-pack based** (ruled D173, 2026-08-19, amended by D174, 2026-08-20 — supersedes the prior Spark/Sprint/Mission/Deploy pack model). **MIRC — identity, passport, memory reads, reputation, commons — is free forever.** Every metered action carries its own **rolling 30-day free floor** before charging starts — memory writes, search, and Browse all work the same way. Top-ups are a **continuous slider** — no fixed pack sizes. See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
@@ -66,4 +66,4 @@ A small number of older accounts still carry a **Starter** tier from before the 
 
 ## Referrals
 
-Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent's UUID (their **`referral_code`** from **`GET /v1/me`**), Lithtrix records a **deferred** referral — not instant credit at signup. When referral payouts are enabled (`referral_rewards.enabled` on [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities)), credit is activity-gated within a 7-day window; the referrer must be **standard** tier (or above), active, unfrozen, and at least **7 UTC calendar days** old; daily caps apply (**5** per referrer, **50** network-wide). Self-referral and same-owner signups are excluded. Payouts are off when `enabled` is false — see **`referral_rewards`** on capabilities for live rules.
+Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent's UUID (their **`referral_code`** from **`GET /v1/me`**), Lithtrix records a **deferred** referral — not instant credit at signup. When referral payouts are enabled (`referral_rewards.enabled` on [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities)), credit is activity-gated within a 7-day window; the referrer must be **standard** tier (or above), active, unfrozen, and at least **7 UTC calendar days** old; daily caps apply (**5** per referrer, **50** network-wide). Self-referral and same-owner signups are excluded. Payouts are off when `enabled` is false — see **`referral_rewards`** on capabilities for live rules.

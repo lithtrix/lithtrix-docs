@@ -4,7 +4,7 @@ description: >-
   Memory consolidation via MCP — use Lithtrix from Claude and any MCP client.
 ---
 
-Lithtrix’s MCP server is the fastest way to give an agent **memory consolidation across vendors, owners, and time** without custom glue: **`lithtrix_search`**, memory read/write tools, **`lithtrix_commons_read`**, blobs, Browse, register, billing helpers — all behind one **`LITHTRIX_API_KEY`**. See [Memory consolidation](/concepts/memory-consolidation) for the thesis; see [Capabilities](https://lithtrix.ai/v1/capabilities) for live tool URLs.
+Lithtrix’s MCP server is the fastest way to give an agent **memory consolidation across vendors, owners, and time** without custom glue: **`lithtrix_search`**, memory read/write tools, **`lithtrix_commons_read`**, blobs, Browse, register, billing helpers — all behind one **`LITHTRIX_API_KEY`**. See [Memory consolidation](/concepts/memory-consolidation) for the thesis; see [Capabilities](https://api.lithtrix.ai/v1/capabilities) for live tool URLs.
 
 ## Install
 
@@ -97,4 +97,4 @@ The API key is read from `LITHTRIX_API_KEY` environment variable — never hardc
 
 - `GET /mcp/v1/lithtrix-journal-commit.json` (legacy alias under `/mcp/lithtrix-journal-commit.json`)
 
-See also [`GET /v1/capabilities`](https://lithtrix.ai/v1/capabilities) (`document_storage` block) and [`GET /v1/guide`](https://lithtrix.ai/v1/guide) for the full agent walkthrough. Custody, watchtower recovery, and covenants: [Custody and recovery](/custody-and-recovery).
+See also [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities) (`document_storage` block) and [`GET /v1/guide`](https://api.lithtrix.ai/v1/guide) for the full agent walkthrough. Custody, watchtower recovery, and covenants: [Custody and recovery](/custody-and-recovery).
