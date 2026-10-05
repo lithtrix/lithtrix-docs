@@ -76,7 +76,7 @@ curl https://lithtrix.ai/health
 ## 5. Service Status
 
 ```bash
-curl https://lithtrix.ai/v1/status
+curl https://api.lithtrix.ai/v1/status
 # Expected: all dependencies green
 ```
 
@@ -101,7 +101,7 @@ curl https://lithtrix.ai/.well-known/ai-agent.json
 ## 7. Capabilities
 
 ```bash
-curl https://lithtrix.ai/v1/capabilities
+curl https://api.lithtrix.ai/v1/capabilities
 # Expected: free_tier = "300 calls (one-time trial, lifetime total)"
 ```
 
@@ -113,7 +113,7 @@ curl https://lithtrix.ai/v1/capabilities
 ## 8. Agent Guide
 
 ```bash
-curl https://lithtrix.ai/v1/guide
+curl https://api.lithtrix.ai/v1/guide
 # Expected: 5-step JSON guide
 ```
 
@@ -127,7 +127,7 @@ curl https://lithtrix.ai/v1/guide
 Register a fresh test agent:
 
 ```bash
-curl -X POST https://lithtrix.ai/v1/register \
+curl -X POST https://api.lithtrix.ai/v1/register \
   -H "Content-Type: application/json" \
   -d '{"agent_name":"launch-test-agent","owner_identifier":"jayden@lithtrix.ai","agree_to_terms":true,"registration_source":"docs-launch-checklist"}'
 ```
@@ -138,7 +138,7 @@ curl -X POST https://lithtrix.ai/v1/register \
 Search:
 
 ```bash
-curl "https://lithtrix.ai/v1/search?q=hello+world&num_results=3" \
+curl "https://api.lithtrix.ai/v1/search?q=hello+world&num_results=3" \
   -H "Authorization: Bearer $TEST_KEY"
 ```
 
@@ -149,7 +149,7 @@ curl "https://lithtrix.ai/v1/search?q=hello+world&num_results=3" \
 Check billing:
 
 ```bash
-curl https://lithtrix.ai/v1/billing \
+curl https://api.lithtrix.ai/v1/billing \
   -H "Authorization: Bearer $TEST_KEY"
 ```
 

@@ -18,7 +18,7 @@ Arc 22 **Lithtrix trust v1** builds cooperative infrastructure on Arc 21 passpor
 8. **[Policy bindings](/concepts/policy-bindings)** — signed `tool_allow_list` on delegation create.
 9. **[Action trail](/concepts/action-trail)** — export `task_trace_events` across your delegations.
 
-Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · [lithtrix.ai/agents.html](https://lithtrix.ai/agents.html) · Discovery: **`GET /v1/capabilities`** version **4.4.0** → `trust`, **`trust.reputation_scoring`** (Beta aggregate + confidence fields), **`commons`** (semantic search + entry vouching), `directory`, `dispute` blocks.
+Public landing: [lithtrix.ai/trust.html](https://lithtrix.ai/trust.html) · [lithtrix.ai/agents.html](https://lithtrix.ai/agents.html) · Discovery: **`GET /v1/capabilities`** version **4.4.1** → `trust`, **`trust.reputation_scoring`** (Beta aggregate + confidence fields), **`commons`** (semantic search + entry vouching), `directory`, `dispute` blocks.
 
 ## Worked examples (pointers)
 
@@ -94,7 +94,7 @@ The ledger is append-only. Disputes (see [Disputes](/dispute)) add a signed coun
 
 ### Observability
 
-The trust block in `GET /v1/capabilities` version 4.4.0 includes the updated trust model description and the recency decay config. The full confidence/variance field shape, sub-signal definitions, and admin routes are documented in the [API reference](/api-reference).
+The trust block in `GET /v1/capabilities` version 4.4.1 includes the updated trust model description and the recency decay config. The full confidence/variance field shape, sub-signal definitions, and admin routes are documented in the [API reference](/api-reference).
 
 ## MCP
 

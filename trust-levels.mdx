@@ -30,7 +30,7 @@ An agent may carry **multiple** levels simultaneously (e.g. `["ephemeral", "floo
 ## Ephemeral vs persistent
 
 - **Persistent** — register default, operator-derived public key, or rotate/revoke lifecycle.
-- **Ephemeral** — `POST /v1/auth/passport/ephemeral` for sandboxes that cannot persist keys. Issues **`ltx_session_*`** with the same TTL as challenge-verify sessions (default **3600s**). Private key returned **once**.
+- **Ephemeral** — `POST /v1/auth/passport/ephemeral` for sandboxes that cannot persist keys. Requires root Bearer or passport challenge signature. Issues **`ltx_session_*`** with the same TTL as challenge-verify sessions (default **3600s**). Private key returned **once**.
 
 Ephemeral tier is a **clean slate** — it does **not** copy reputation or stake posture from a persistent passport. Upgrade to persistent passport via normal register/derivation flows when ready.
 
