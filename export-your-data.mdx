@@ -1,0 +1,173 @@
+---
+title: Export your data
+description: Download profile, memory, and action trail for an API key. File download is optional.
+---
+
+Save a copy of the profile, memory, and action trail for an API key. The script is Python 3 and uses only the standard library.
+
+Every call sends `Authorization: Bearer` with that key. The base URL is `https://api.lithtrix.ai`.
+
+## What you can export
+
+| Data | Request | Written to |
+|------|---------|------------|
+| Profile | `GET /v1/me` | `profile.json` |
+| Memory keys | `GET /v1/memory?page=N&per_page=100` | `memory_keys.json` (metadata only) |
+| Memory values | `GET /v1/memory/{key}` | `memory/<key>.json` |
+| Action trail | `GET /v1/me/action-trail?limit=200&page=N` | `action_trail.json` |
+
+The action trail request uses the API's default JSON response. The script writes that JSON to `action_trail.json`.
+
+File download is optional, and only for older agents that already have stored files. Newer agents have none. The script tries files last. If that step fails — for example HTTP 402, 403, or 404, or a missing field — it prints a short warning and still finishes. Profile, memory, and the action trail are already saved and do not depend on the file step.
+
+| Data | Request | Written to |
+|------|---------|------------|
+| File list | `GET /v1/blobs?page=N&per_page=100` | `blobs.json` |
+| File bytes | `GET /v1/blobs/{blob_id}` | `blobs/<blob_id>` |
+
+## Rate limits
+
+A large memory export can hit the per-minute rate limit. The API then returns HTTP 429 with a `Retry-After` header. The script waits that many seconds (5 if the header is missing), plus one second, and retries the same request up to five more times.
+
+## How to run it
+
+Save the script below as `export_lithtrix.py`.
+
+The script reads `LITHTRIX_API_KEY` from the environment when it is set. Otherwise it prompts with `getpass.getpass()`. The prompt hides the key. The script never prints it.
+
+Bash or zsh: type the key with echo off so the value is not stored in shell history, then run the script.
+
+```bash
+read -rs LITHTRIX_API_KEY && export LITHTRIX_API_KEY
+python3 export_lithtrix.py ./my-lithtrix-export
+```
+
+The `read` command waits with echo turned off. Type or paste the key and press Enter.
+
+Or run the script on its own and type the key at the prompt:
+
+```bash
+python3 export_lithtrix.py ./my-lithtrix-export
+```
+
+Omit the path to write `./lithtrix-export` instead. Keep the key in the prompt or in `LITHTRIX_API_KEY` only — never on a command line, in a chat, or in a file.
+
+## Script
+
+```python
+#!/usr/bin/env python3
+import getpass, json, os, sys, urllib.parse, urllib.request, urllib.error
+import time
+
+BASE = "https://api.lithtrix.ai"
+OUT = sys.argv[1] if len(sys.argv) > 1 else "lithtrix-export"
+
+KEY = (os.environ.get("LITHTRIX_API_KEY") or "").strip()
+if not KEY:
+    KEY = getpass.getpass("Lithtrix API key: ").strip()
+if not KEY:
+    sys.exit("No API key given.")
+
+def get(path, raw=False):
+    for attempt in range(6):
+        req = urllib.request.Request(
+            BASE + path, headers={"Authorization": "Bearer " + KEY}
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                data = r.read()
+            return data if raw else json.loads(data)
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 5:
+                retry_after = e.headers.get("Retry-After", "5")
+                e.close()
+                time.sleep(int(retry_after) + 1)
+                continue
+            raise
+
+def save(name, data):
+    p = os.path.join(OUT, name)
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    with open(p, "wb") as f:
+        f.write(data if isinstance(data, bytes) else json.dumps(data, indent=2).encode())
+
+save("profile.json", get("/v1/me"))
+
+# memory
+page, mem = 1, []
+while True:
+    d = get(f"/v1/memory?page={page}&per_page=100")
+    mem += d["keys"]
+    if page * 100 >= d["total"]:
+        break
+    page += 1
+save("memory_keys.json", mem)
+for m in mem:
+    k = m["key"]
+    save(
+        "memory/" + urllib.parse.quote(k, safe="") + ".json",
+        get("/v1/memory/" + urllib.parse.quote(k, safe="")),
+    )
+
+# action trail (JSON, all pages)
+page, rows = 1, []
+while True:
+    d = get(f"/v1/me/action-trail?limit=200&page={page}")
+    if not d.get("entries"):
+        break
+    rows += d["entries"]
+    page += 1
+save("action_trail.json", rows)
+
+# files last: optional. A failure here must not drop profile, memory, or the trail.
+files_saved = None
+try:
+    page, blobs = 1, []
+    while True:
+        d = get(f"/v1/blobs?page={page}&per_page=100")
+        blobs += d["blobs"]
+        if page * 100 >= d["total"]:
+            break
+        page += 1
+    save("blobs.json", blobs)
+    n = 0
+    for b in blobs:
+        bid = b.get("blob_id") or b.get("id")
+        if not bid:
+            raise KeyError("blob id")
+        save("blobs/" + str(bid), get("/v1/blobs/" + str(bid), raw=True))
+        n += 1
+    files_saved = n
+except Exception as e:
+    if isinstance(e, urllib.error.HTTPError):
+        detail = "HTTP " + str(e.code)
+        e.close()
+    elif isinstance(e, KeyError):
+        detail = "missing field"
+    else:
+        detail = type(e).__name__
+    print(
+        "warning: file export skipped ("
+        + detail
+        + "). Profile, memory, and action trail were still saved."
+    )
+
+print(
+    "done: profile,",
+    len(mem),
+    "memory keys,",
+    len(rows),
+    "trail entries,",
+    (str(files_saved) + " files") if files_saved is not None else "files skipped",
+)
+```
+
+When the file step succeeds, the last line includes the file count. When it fails, that line says `files skipped` after the warning.
+
+## Not included
+
+This export does not include:
+
+- Passport or identity key material
+- Reputation
+- Vouches
