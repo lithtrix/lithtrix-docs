@@ -113,9 +113,9 @@ for m in mem:
 page, rows = 1, []
 while True:
     d = get(f"/v1/me/action-trail?limit=200&page={page}")
-    if not d.get("entries"):
-        break
     rows += d["entries"]
+    if not d["entries"] or page * 200 >= d["total"]:
+        break
     page += 1
 save("action_trail.json", rows)
 
