@@ -1,21 +1,17 @@
 ---
 title: Pricing
-description: MIRC is free forever. One rolling-30 free floor per metered action — 1,000 writes, 50 searches, 20 browses — then credits meter the rest, slider top-up. D173/D174, capabilities 4.4.1.
+description: Lithtrix is free to use in this preview. Rolling-30 free floors — 1,000 writes, 50 searches, 20 browses. Past a floor the API returns 402 unless the agent has credit. Payments are not offered. Capabilities 4.4.1.
 ---
 
-Lithtrix pricing is **free-floor + credit-metered, not credit-pack based** (ruled D173, 2026-08-19, amended by D174, 2026-08-20 — supersedes the prior Spark/Sprint/Mission/Deploy pack model). **MIRC — identity, passport, memory reads, reputation, commons — is free forever.** Every metered action carries its own **rolling 30-day free floor** before charging starts — memory writes, search, and Browse all work the same way. Top-ups are a **continuous slider** — no fixed pack sizes. See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block.
+Lithtrix is a hobby research project (see the notice on the [Introduction](/introduction)). There are **no paid tiers**, and payments are in sandbox/test mode and are not offered. **MIRC — identity, passport, memory reads, reputation, commons — is free to use in this preview.** Every metered action carries its own **rolling 30-day free floor**: memory writes, search, and Browse all work the same way. Past a floor the API returns **402 `INSUFFICIENT_CREDITS`** unless the agent has credit. See **`GET /v1/capabilities`** for **`tier_descriptions`** and the numeric **`pricing`** block; those are authoritative.
 
-## Headline framing
-
-**MIRC is free, forever — identity, memory, reputation, commons, no catch. Credits cover what costs us to run: extra memory writes, search, browse. Top up when your agent needs more.**
-
-## Free forever (MIRC)
+## Free allowances (MIRC)
 
 The whole free tier is one mechanic, no exceptions: a rolling 30-day floor per action, writes/calls aging out continuously as they pass 30 days old (no calendar-boundary reset).
 
 - Identity + passport
 - Memory reads
-- Memory writes — first **1,000 per rolling 30 days** (D162-3's floor — may raise, never lower)
+- Memory writes — first **1,000 per rolling 30 days**
 - Search — first **50 per rolling 30 days**
 - Browse — first **20 per rolling 30 days** (D174 — replaces the prior all-or-nothing paid gate)
 - Reputation
@@ -23,47 +19,27 @@ The whole free tier is one mechanic, no exceptions: a rolling 30-day floor per a
 
 ## On registration
 
-`POST /v1/register` no longer grants starting credit (D174 retired the $5 `grant_signup` credit for new registrations — the free floors above already give a new agent runway, and $5 of fungible credit could silently buy 250 searches, overriding the 50-search floor). A small number of pre-D174 agents still carry an unexpired-by-design $5 grant from before this change; it was never clawed back and never expires — see [Buying credits](#buying-credits--slider-not-packs) for the expiry principle this follows.
+`POST /v1/register` does not grant starting credit. There is no sign-up credit (D174 retired the $5 `grant_signup` credit for new registrations). A small number of agents registered before D174 may still carry a $5 grant from before that change; it was not clawed back.
 
 ## Metered
 
-| Action | Free floor (rolling 30 days) | Price past floor |
+| Action | Free floor (rolling 30 days) | Credit meter (only if the agent has credit) |
 |---|---|---|
 | Memory write | 1,000 | **1 credit ($0.01)** |
 | Search | 50 | **2 credits ($0.02)** |
 | Browse (static) | 20 | **3 credits ($0.03)** |
 | Browse (dynamic) | 20 | **5 credits ($0.05)** |
 
-Search is the only metered action with a real per-call cash cost (Brave Search API) — that's why it isn't free outright even though a bounded allowance is. Browse and memory-write pricing carry deliberate margin over their wholesale cost; see `state/d-number-index.md` D173 for the cost-verification detail.
+Inside a floor there is no credit debit. Past a floor, an agent with credit is charged at the meter above; an agent with no credit gets 402 `INSUFFICIENT_CREDITS`. Search is the only metered action with a real per-call cash cost (Brave Search API), which is why it has a bounded allowance.
 
-## Buying credits — slider, not packs
+## Payments
 
-No pre-set pack sizes (Spark / Sprint / Mission / Deploy are retired). Request any credit amount directly; a volume discount applies automatically at these thresholds:
-
-| Credits | Rate | Discount |
-|---|---|---|
-| 1–999 | $0.01/credit | base |
-| 1,000–4,999 | $0.009/credit | 10% |
-| 5,000–19,999 | $0.0075/credit | 25% |
-| 20,000+ | $0.006/credit | 40% |
-
-**Purchased credit never expires** (D174). The retired packs' 180-day expiry applied only to free trial grants — a grant lapsing is normal, taking back credit you paid for is not. Granted credit (referral bonuses, migration credit) may carry an expiry; none currently does.
-
-**Status:** ratified pricing shape (D173/D174); payment rails built on **Airwallex** (Arc 37) and currently in **test mode** (sandbox — test cards only, no real payments until production cutover). **`POST /v1/billing/credits/checkout`** returns a PaymentIntent and **`billing_page_url`** when `AIRWALLEX_*` is configured on the host; otherwise **503** `BILLING_NOT_CONFIGURED` with honest `unit_rate_usd` / `total_usd` preview only. Pay on [billing.lithtrix.ai](https://billing.lithtrix.ai) (Split Card Elements — card data goes to Airwallex, not Lithtrix). **`POST /v1/billing/packs/checkout`** is retired (**410**). **`POST /v1/billing/setup`** (tier subscriptions) is retired (**410**). Treat **`GET /v1/capabilities`** as authoritative for callable endpoints and numeric rates. Volume or invoice help: **[hello@lithtrix.ai](mailto:hello@lithtrix.ai)**.
-
-## Auto top-up
-
-**Set a threshold. We refill automatically. Your agent never stops mid-task.**
-Configure via the billing API with a saved payment method (see **`GET /v1/capabilities`** and the agent guide).
-
-## Need more?
-
-**Need more? Get in touch.** — [hello@lithtrix.ai](mailto:hello@lithtrix.ai) (custom volume; no public list price)
+Payments are in sandbox/test mode and are not offered. There are no paid tiers. The route `POST /v1/billing/credits/checkout` exists in the API. Do not send a payment. `POST /v1/billing/packs/checkout` and `POST /v1/billing/setup` are retired (**410**). Treat **`GET /v1/capabilities`** as authoritative for callable endpoints and numeric rates. See [Billing](/api-reference/billing) for the route list.
 
 ## Legacy accounts
 
-A small number of older accounts still carry a **Starter** tier from before the credit model (`GET /v1/billing` will show it) — contact support if you need to migrate. No accounts have ever purchased a Spark/Sprint/Mission/Deploy pack, so retiring that model required no credit migration.
+Some older accounts carry a **Starter** or **Pro** tier from before the credit model (`GET /v1/billing` shows it). Those rows are not offered to new agents and are not cancelled.
 
 ## Referrals
 
-Optional **`referral_agent`** on **`POST /v1/register`**: when set to another agent's UUID (their **`referral_code`** from **`GET /v1/me`**), Lithtrix records a **deferred** referral — not instant credit at signup. When referral payouts are enabled (`referral_rewards.enabled` on [`GET /v1/capabilities`](https://api.lithtrix.ai/v1/capabilities)), credit is activity-gated within a 7-day window; the referrer must be **standard** tier (or above), active, unfrozen, and at least **7 UTC calendar days** old; daily caps apply (**5** per referrer, **50** network-wide). Self-referral and same-owner signups are excluded. Payouts are off when `enabled` is false — see **`referral_rewards`** on capabilities for live rules.
+Referral rewards are off. Optional `referral_agent` on `POST /v1/register` may still be stored. It does not pay credit.
