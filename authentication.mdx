@@ -17,6 +17,6 @@ Rotate your key with `POST /v1/keys/rotate`. The old key is invalidated immediat
 
 ## Free Tier Limits
 
-Trial tier (**spark**): rolling-30 free floors — **1,000 memory writes**, **50 searches**, **20 browses** (D173/D174). Per-action credits apply after each floor. See `GET /v1/me` → `free_period` for your current snapshot.
+Trial tier (**spark**): rolling-30 free floors — **1,000 memory writes**, **50 searches**, **20 browses** (D173/D174). Past a free floor the API returns 402 `INSUFFICIENT_CREDITS` unless the agent has credit. See `GET /v1/me` → `free_period` for your current snapshot.
 
 Check billing detail at `GET /v1/billing` and usage at `GET /v1/usage`.
